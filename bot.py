@@ -17,14 +17,14 @@ DB = Custom.read_JSON("db.json")
 
 GUILD_ID = 749001540886462664
 WELCOME_CHANNEL_ID = 750774345109995583
-WELCOME_MSG_ID = 750807493629968426
+WELCOME_MSG_ID = 750839901414752327
 WELCOME_MSG = f"""
 
 For å kunne bruke chat eller voice kanaler på denne serveren må du bli tildelt en Student-rolle av Admin. Vi ber deg vennligst skifte ditt kallenavn ved å finne deg selv i 'medlemslisten' til høyre, høyreklikke på deg selv, og bytte til ditt virkelige navn. Det kan ta litt tid for Admin å oppdage deg, så ta gjerne kontakt når du er klar. :slight_smile:
 
 For å få tilgang til emne-kanalene; klikk på de korresponderende emojiene under denne meldingen. Du kan fjerne ditt medlemskap fra et emne ved å klikke på den samme emojien om igjen.
 
-Merk: Selv om du har tilgang til kanalen vil du ikke kunne kommunisere i kanalen før du har fått innvilget student-rolle fra Admin.
+Merk: Selv om du har tilgang til kanalen vil du kun ha lese-rettigheter før du har fått innvilget student-rolle fra Admin.
 
 ```
 \N{DRAGON}\tIBE205 Agile Methods
@@ -50,7 +50,12 @@ async def print_embed():
     embed.set_thumbnail(url=bot.user.avatar_url)
 
     WELCOME_CHANNEL = bot.get_channel(WELCOME_CHANNEL_ID)
-    await WELCOME_CHANNEL.send(embed=embed)
+    msg = await WELCOME_CHANNEL.send(embed=embed)
+
+    for key in DB.keys():
+        await msg.add_reaction(key)
+
+    if DB
 
 
 @bot.event
@@ -69,7 +74,10 @@ async def on_raw_reaction_add(payload):
             user = payload.member
             guild = bot.get_guild(GUILD_ID)
             role = get(guild.roles, name=DB[key]["code"])
-            await discord.Member.add_roles(user, role)
+            try:
+                await discord.Member.add_roles(user, role)
+            except:
+                pass
 
 
 @bot.event
@@ -82,7 +90,10 @@ async def on_raw_reaction_remove(payload):
             guild = bot.get_guild(GUILD_ID)
             user = guild.get_member(payload.user_id)
             role = get(guild.roles, name=DB[key]["code"])
-            await discord.Member.remove_roles(user, role)
+            try:
+                await discord.Member.remove_roles(user, role)
+            except:
+                pass
 
 
 bot.run(ENV_TOKEN)

@@ -1,5 +1,4 @@
 from json import dump, load
-from os import system
 from pathlib import Path
 
 
