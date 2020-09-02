@@ -6,87 +6,83 @@ from discord.utils import get
 from os import getenv
 from dotenv import load_dotenv
 
-load_dotenv()
+from custom import Custom
 
-ENV_TOKEN = getenv("DISCORD_TOKEN")
 
 bot = commands.Bot(command_prefix="!")
+
+load_dotenv()
+ENV_TOKEN = getenv("DISCORD_TOKEN")
+DB = Custom.read_JSON("db.json")
+
+GUILD_ID = 749001540886462664
+WELCOME_CHANNEL_ID = 750774345109995583
+WELCOME_MSG_ID = 750807493629968426
+WELCOME_MSG = f"""
+
+For å kunne bruke chat eller voice kanaler på denne serveren må du bli tildelt en Student-rolle av Admin. Vi ber deg vennligst skifte ditt kallenavn ved å finne deg selv i 'medlemslisten' til høyre, høyreklikke på deg selv, og bytte til ditt virkelige navn. Det kan ta litt tid for Admin å oppdage deg, så ta gjerne kontakt når du er klar. :slight_smile:
+
+For å få tilgang til emne-kanalene; klikk på de korresponderende emojiene under denne meldingen. Du kan fjerne ditt medlemskap fra et emne ved å klikke på den samme emojien om igjen.
+
+Merk: Selv om du har tilgang til kanalen vil du ikke kunne kommunisere i kanalen før du har fått innvilget student-rolle fra Admin.
+
+```
+\N{DRAGON}\tIBE205 Agile Methods
+\N{MONKEY FACE}\tIBE102 Webutvikling
+\N{WATERMELON}\tIBE151 Practical Programming
+\N{GRAPES}\tIBE110 Information Technology
+\N{BANANA}\tLOG206 Elektronisk Handel
+\N{ROOSTER}\tIBE120 Virksomhetsdata
+\N{PENGUIN}\tIBE211 Databaser
+\N{SUN WITH FACE}\tADM100 Organisasjon
+\N{FIRE}\tBØK105 Finansregnskap
+\N{HOT PEPPER}\tMAT100 Matematikk
+\N{COOKIE}\tIBE320 Virtuell Virkelighet
+\N{ICE CUBE}\tSCM110 Innføring i SCM
+\N{MONEY WITH WINGS}\tIBE430 Forretningsprosesser
+```
+    """
+
+
+async def print_embed():
+    embed = discord.Embed(title="Velkommen!", description=WELCOME_MSG, color=0xEDEDED,)
+    embed.set_author(name="IT og digitalisering")
+    embed.set_thumbnail(url=bot.user.avatar_url)
+
+    WELCOME_CHANNEL = bot.get_channel(WELCOME_CHANNEL_ID)
+    await WELCOME_CHANNEL.send(embed=embed)
 
 
 @bot.event
 async def on_ready():
-    print(f"Logged on as {bot.user}!")
+    print(f"{bot.user} is ready!")
+    # await print_embed()
 
 
 @bot.event
-async def on_member_join(member):
+async def on_raw_reaction_add(payload):
+    if payload.message_id != WELCOME_MSG_ID:
+        return
 
-    WELCOME_MSG = f"""\
-        Hi {member.name}, welcome to Asc3ndR's Devspace!\
-    """
-
-    await member.create_dm()
-    await member.dm_channel.send(WELCOME_MSG)
+    for key in DB.keys():
+        if payload.emoji.name == key:
+            user = payload.member
+            guild = bot.get_guild(GUILD_ID)
+            role = get(guild.roles, name=DB[key]["code"])
+            await discord.Member.add_roles(user, role)
 
 
 @bot.event
-async def on_message(message):
-    if message.author == bot.user:
-        return
+async def on_raw_reaction_remove(payload):
+    if payload.user_id == bot.user:
+        pass
 
-    if message.content == "x":
-        await message.channel.send("x")
-
-    await bot.process_commands(message)
-    print(f"Message from {message.author}: {message.content}")
-
-
-@bot.command(name="join", help="example: !join IBE151")
-async def join(ctx, subject: str):
-
-    user = ctx.author
-
-    if subject.lower() == "student":
-        await user.create_dm()
-        await user.dm_channel.send(
-            f"Student role cannot be assigned via bot command. Please contact an administrator."
-        )
-        return
-
-    subject = subject.upper()
-    desired_role = get(ctx.guild.roles, name=subject)
-    student_role = get(ctx.guild.roles, name="Student")
-
-    if not desired_role:
-        await user.create_dm()
-        await user.dm_channel.send(
-            f"No subject by name {subject}, are you sure you spelled it correctly?"
-        )
-        return
-
-    if desired_role.permissions > student_role.permissions:
-        await user.create_dm()
-        await user.dm_channel.send(
-            f"{subject} role cannot be assigned via bot command. Please contact an administrator."
-        )
-        return
-
-    await discord.Member.add_roles(user, desired_role)
-
-
-@bot.command(name="leave", help="example: !leave IBE151")
-async def leave(ctx, subject: str):
-
-    subject = subject.upper()
-    user = ctx.author
-    role = get(ctx.guild.roles, name=subject)
-
-    if not role:
-        await user.create_dm()
-        await user.dm_channel.send(f"No subject by name {subject} exist!")
-        return
-
-    await discord.Member.add_roles(user, role)
+    for key in DB.keys():
+        if payload.emoji.name == key:
+            guild = bot.get_guild(GUILD_ID)
+            user = guild.get_member(payload.user_id)
+            role = get(guild.roles, name=DB[key]["code"])
+            await discord.Member.remove_roles(user, role)
 
 
 bot.run(ENV_TOKEN)
