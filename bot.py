@@ -13,69 +13,64 @@ bot = commands.Bot(command_prefix="!")
 
 load_dotenv()
 ENV_TOKEN = getenv("DISCORD_TOKEN")
-DB = Custom.read_JSON("db.json")
+DB_CONSTANTS = Custom.read_JSON("constants.json")
+DB_COURSES = Custom.read_JSON("courses.json")
 
-GUILD_ID = 749001540886462664
-WELCOME_CHANNEL_ID = 750774345109995583
-WELCOME_MSG_ID = 750839901414752327
-WELCOME_MSG = f"""
 
-For å kunne bruke chat eller voice kanaler på denne serveren må du bli tildelt en Student-rolle av Admin. Vi ber deg vennligst skifte ditt kallenavn ved å finne deg selv i 'medlemslisten' til høyre, høyreklikke på deg selv, og bytte til ditt virkelige navn. Det kan ta litt tid for Admin å oppdage deg, så ta gjerne kontakt når du er klar. :slight_smile:
+async def print_welcome_message():
+    welcome_msg_courses = "\n".join(
+        [
+            f"{value['icon']}\t{key}\t{value['name']}"
+            for key, value in DB_COURSES.items()
+        ]
+    )
+    welcome_msg = f"""
+    For å kunne bruke chat eller voice kanaler på denne serveren må du bli tildelt en Student-rolle av Admin. Vi ber deg vennligst bytte til dit virkelige navn ved å finne deg selv i 'medlemslisten' til høyre, høyreklikke på deg selv, og klikk på "Bytt Kallenavn / Change Nickname". Det kan ta litt tid før Admin går igjennom medlemslisten, så ta gjerne kontakt når du er klar. :slight_smile:
 
-For å få tilgang til emne-kanalene; klikk på de korresponderende emojiene under denne meldingen. Du kan fjerne ditt medlemskap fra et emne ved å klikke på den samme emojien om igjen.
+    For å få tilgang til emne-kanalene; klikk på de korresponderende emojiene under denne meldingen. Du kan fjerne ditt medlemskap fra et emne ved å klikke på den samme emojien om igjen.
 
-Merk: Selv om du har tilgang til kanalen vil du kun ha lese-rettigheter før du har fått innvilget student-rolle fra Admin.
+    Merk: Selv om du har tilgang til en kanal vil du kun ha lese-rettigheter inntil du får innvilget student-rolle fra Admin.
 
-```
-\N{DRAGON}\tIBE205 Agile Methods
-\N{MONKEY FACE}\tIBE102 Webutvikling
-\N{WATERMELON}\tIBE151 Practical Programming
-\N{GRAPES}\tIBE110 Information Technology
-\N{BANANA}\tLOG206 Elektronisk Handel
-\N{ROOSTER}\tIBE120 Virksomhetsdata
-\N{PENGUIN}\tIBE211 Databaser
-\N{SUN WITH FACE}\tADM100 Organisasjon
-\N{FIRE}\tBØK105 Finansregnskap
-\N{HOT PEPPER}\tMAT100 Matematikk
-\N{COOKIE}\tIBE320 Virtuell Virkelighet
-\N{ICE CUBE}\tSCM110 Innføring i SCM
-\N{MONEY WITH WINGS}\tIBE430 Forretningsprosesser
-```
+    ```
+    {welcome_msg_courses}
+    ```
     """
 
+    welcome_embed = discord.Embed(
+        title="Velkommen!", description=welcome_msg, color=0xEDEDED,
+    )
+    welcome_embed.set_author(name="IT og digitalisering")
+    welcome_embed.set_thumbnail(url=bot.user.avatar_url)
 
-async def print_embed():
-    embed = discord.Embed(title="Velkommen!", description=WELCOME_MSG, color=0xEDEDED,)
-    embed.set_author(name="IT og digitalisering")
-    embed.set_thumbnail(url=bot.user.avatar_url)
+    WELCOME_CHANNEL = bot.get_channel(DB_CONSTANTS["WELCOME_CHANNEL_ID"])
+    msg = await WELCOME_CHANNEL.send(embed=welcome_embed)
 
-    WELCOME_CHANNEL = bot.get_channel(WELCOME_CHANNEL_ID)
-    msg = await WELCOME_CHANNEL.send(embed=embed)
+    for value in DB_COURSES.values():
+        await msg.add_reaction(value["icon"])
 
-    for key in DB.keys():
-        await msg.add_reaction(key)
-
-    if DB
+    DB_CONSTANTS["WELCOME_CHANNEL_MSG_ID"] = msg.id
+    Custom.write_JSON("constants.json", DB_CONSTANTS)
 
 
 @bot.event
 async def on_ready():
     print(f"{bot.user} is ready!")
-    # await print_embed()
+    # await print_welcome_message()
 
 
 @bot.event
 async def on_raw_reaction_add(payload):
-    if payload.message_id != WELCOME_MSG_ID:
+    if payload.message_id != DB_CONSTANTS["WELCOME_CHANNEL_MSG_ID"]:
         return
 
-    for key in DB.keys():
-        if payload.emoji.name == key:
+    for key, value in DB_COURSES.items():
+        if payload.emoji.name == value["icon"]:
             user = payload.member
-            guild = bot.get_guild(GUILD_ID)
-            role = get(guild.roles, name=DB[key]["code"])
+            guild = bot.get_guild(DB_CONSTANTS["GUILD_ID"])
+            role = get(guild.roles, name=key)
             try:
                 await discord.Member.add_roles(user, role)
+                print(f"{user} assigned to {role}")
             except:
                 pass
 
@@ -85,13 +80,14 @@ async def on_raw_reaction_remove(payload):
     if payload.user_id == bot.user:
         pass
 
-    for key in DB.keys():
-        if payload.emoji.name == key:
-            guild = bot.get_guild(GUILD_ID)
+    for key, value in DB_COURSES.items():
+        if payload.emoji.name == value["icon"]:
+            guild = bot.get_guild(DB_CONSTANTS["GUILD_ID"])
             user = guild.get_member(payload.user_id)
-            role = get(guild.roles, name=DB[key]["code"])
+            role = get(guild.roles, name=key)
             try:
                 await discord.Member.remove_roles(user, role)
+                print(f"{user} removed from {role}")
             except:
                 pass
 

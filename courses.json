@@ -1,0 +1,67 @@
+{
+    "IBE205": {
+        "icon": "🐉",
+        "name": "Agile Methods",
+        "users": []
+    },
+    "IBE151": {
+        "icon": "🍉",
+        "name": "Practical Programming",
+        "users": []
+    },
+    "IBE102": {
+        "icon": "🐵",
+        "name": "Webutvikling",
+        "users": []
+    },
+    "IBE110": {
+        "icon": "🍇",
+        "name": "Information Technology",
+        "users": []
+    },
+    "LOG206": {
+        "icon": "🍌",
+        "name": "Elektronisk Handel",
+        "users": []
+    },
+    "IBE120": {
+        "icon": "🐓",
+        "name": "Virksomhetsdata",
+        "users": []
+    },
+    "IBE211": {
+        "icon": "🐧",
+        "name": "Databaser",
+        "users": []
+    },
+    "ADM100": {
+        "icon": "🌞",
+        "name": "Organisasjon",
+        "users": []
+    },
+    "BØK105": {
+        "icon": "🔥",
+        "name": "Finansregnskap",
+        "users": []
+    },
+    "MAT100": {
+        "icon": "🌶",
+        "name": "Matematikk",
+        "users": []
+    },
+    "IBE320": {
+        "icon": "🍪",
+        "name": "Virtuell Virkelighet",
+        "users": []
+    },
+    "SCM110": {
+        "icon": "🧊",
+        "name": "Innføring i SCM",
+        "users": []
+    },
+    "IBE430": {
+        "icon": "💸",
+        "name": "Forretningsprosesser",
+        "users": []
+    }
+}
