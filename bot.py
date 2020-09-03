@@ -25,7 +25,7 @@ async def print_welcome_message():
         ]
     )
     welcome_msg = f"""
-    For å kunne bruke chat eller voice kanaler på denne serveren må du bli tildelt en Student-rolle av Admin. Vi ber deg vennligst bytte til dit virkelige navn ved å finne deg selv i 'medlemslisten' til høyre, høyreklikke på deg selv, og klikk på "Bytt Kallenavn / Change Nickname". Det kan ta litt tid før Admin går igjennom medlemslisten, så ta gjerne kontakt når du er klar. :slight_smile:
+    For å kunne bruke chat eller voice kanaler på denne serveren må du bli tildelt en Student-rolle av Admin. Vi ber deg vennligst bytte til ditt virkelige navn ved å finne deg selv i 'medlemslisten' til høyre, høyreklikke på deg selv, og klikk på "Bytt Kallenavn / Change Nickname". Det kan ta litt tid før Admin går igjennom medlemslisten, så ta gjerne kontakt når du er klar. :slight_smile:
 
     For å få tilgang til emne-kanalene; klikk på de korresponderende emojiene under denne meldingen. Du kan fjerne ditt medlemskap fra et emne ved å klikke på den samme emojien om igjen.
 
@@ -65,13 +65,13 @@ async def create_channels():
     if not get(guild.categories, name="Test"):
         category = await discord.Guild.create_category(guild, name="Test")
 
-    channe_overwrites = {
+    channel_overwrites = {
         guild.student: discord.PermissionOverwrite(
             read_messages=False, send_messages=True
         )
     }
     for key in DB_COURSES.keys():
-        channe_overwrites = {
+        channel_overwrites = {
             "Student": discord.PermissionOverwrite(  # NOTE: Student is not a property of guild. This is broken.
                 read_messages=False, send_messages=True
             ),
