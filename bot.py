@@ -18,9 +18,9 @@ DB_COURSES = Custom.read_JSON("courses.json")
 
 
 async def print_welcome_message():
-    welcome_msg_courses = "\n".join(
+    welcome_msg_courses = "".join(
         [
-            f"{value['icon']}\t{key}\t{value['name']}"
+            f"\n\t{value['icon']}\t{key}\t{value['name']}"
             for key, value in DB_COURSES.items()
         ]
     )
@@ -29,7 +29,7 @@ async def print_welcome_message():
 
     For å få tilgang til emne-kanalene; klikk på de korresponderende emojiene under denne meldingen. Du kan fjerne ditt medlemskap fra et emne ved å klikke på den samme emojien om igjen.
 
-    Merk: Selv om du har tilgang til en kanal vil du kun ha lese-rettigheter inntil du får innvilget student-rolle fra Admin.
+    **Merk:** Selv om du har tilgang til en kanal vil du kun ha lese-rettigheter inntil du får innvilget student-rolle fra Admin.
 
     ```
     {welcome_msg_courses}
@@ -52,10 +52,42 @@ async def print_welcome_message():
     Custom.write_JSON("constants.json", DB_CONSTANTS)
 
 
+async def create_roles():
+    guild = bot.get_guild(DB_CONSTANTS["GUILD_ID"])
+    for key in DB_COURSES.keys():
+        if not get(guild.roles, name=key):
+            await guild.create_role(name=key, permissions=discord.Permissions(67175424))
+
+
+async def create_channels():
+    guild = bot.get_guild(DB_CONSTANTS["GUILD_ID"])
+
+    if not get(guild.categories, name="Test"):
+        category = await discord.Guild.create_category(guild, name="Test")
+
+    channe_overwrites = {
+        guild.student: discord.PermissionOverwrite(
+            read_messages=False, send_messages=True
+        )
+    }
+    for key in DB_COURSES.keys():
+        channe_overwrites = {
+            "Student": discord.PermissionOverwrite(  # NOTE: Student is not a property of guild. This is broken.
+                read_messages=False, send_messages=True
+            ),
+            key: discord.PermissionOverwrite(read_messages=True, send_messages=False),
+        }
+        await guild.create_text_channel(
+            name=key, category="Test", overwrites=channel_overwrites
+        )
+
+
 @bot.event
 async def on_ready():
-    print(f"{bot.user} is ready!")
     # await print_welcome_message()
+    # await create_roles()
+    # # await create_channels() # NOTE: Not fully implemented. Don't use.
+    print(f"{bot.user} is ready!")
 
 
 @bot.event
