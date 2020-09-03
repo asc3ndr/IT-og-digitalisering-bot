@@ -92,6 +92,9 @@ async def on_ready():
 
 @bot.event
 async def on_raw_reaction_add(payload):
+    if payload.user_id == bot.user:
+        pass
+
     if payload.message_id != DB_CONSTANTS["WELCOME_CHANNEL_MSG_ID"]:
         return
 
