@@ -1,23 +1,35 @@
 #!/usr/bin/python3
+
 import discord
 from discord.ext import commands
 from discord.utils import get
 
 from os import getenv
 from dotenv import load_dotenv
+import requests
+import re
 
 from custom import Custom
 
 
+# INITIALIZE
+
 bot = commands.Bot(command_prefix="!")
 
 load_dotenv()
-ENV_TOKEN = getenv("DISCORD_TOKEN")
-DB_CONSTANTS = Custom.read_JSON("constants.json")
-DB_COURSES = Custom.read_JSON("courses.json")
+DISCORD_TOKEN = getenv("DISCORD_TOKEN")
+CANVAS_TOKEN = getenv("CANVAS_TOKEN")
+
+DB_ANNOUNCEMENTS = Custom.read_JSON("data/announcements.json")
+DB_CONSTANTS = Custom.read_JSON("data/constants.json")
+DB_COURSES = Custom.read_JSON("data/courses.json")
+MAKE_CANVAS_API_CALLS = True
 
 
-async def print_welcome_message():
+# FUNCTIONS
+
+
+async def create_welcome_message():
     welcome_msg_courses = "".join(
         [
             f"\n\t{value['icon']}\t{key}\t{value['name']}"
@@ -42,8 +54,8 @@ async def print_welcome_message():
     welcome_embed.set_author(name="IT og digitalisering")
     welcome_embed.set_thumbnail(url=bot.user.avatar_url)
 
-    WELCOME_CHANNEL = bot.get_channel(DB_CONSTANTS["WELCOME_CHANNEL_ID"])
-    msg = await WELCOME_CHANNEL.send(embed=welcome_embed)
+    welcome_channel = bot.get_channel(DB_CONSTANTS["WELCOME_CHANNEL_ID"])
+    msg = await welcome_channel.send(embed=welcome_embed)
 
     for value in DB_COURSES.values():
         await msg.add_reaction(value["icon"])
@@ -59,34 +71,57 @@ async def create_roles():
             await guild.create_role(name=key, permissions=discord.Permissions(67175424))
 
 
-async def create_channels():
-    guild = bot.get_guild(DB_CONSTANTS["GUILD_ID"])
+async def canvas_api_call(course_key: str):
 
-    if not get(guild.categories, name="Test"):
-        category = await discord.Guild.create_category(guild, name="Test")
+    course_id = DB_COURSES[course_key]["id"]
+    if not course_id:
+        return
 
-    channel_overwrites = {
-        guild.student: discord.PermissionOverwrite(
-            read_messages=False, send_messages=True
-        )
-    }
-    for key in DB_COURSES.keys():
-        channel_overwrites = {
-            "Student": discord.PermissionOverwrite(  # NOTE: Student is not a property of guild. This is broken.
-                read_messages=False, send_messages=True
-            ),
-            key: discord.PermissionOverwrite(read_messages=True, send_messages=False),
-        }
-        await guild.create_text_channel(
-            name=key, category="Test", overwrites=channel_overwrites
-        )
+    r = requests.get(
+        f"https://himolde.instructure.com/api/v1/announcements?context_codes[]=course_{course_id}&access_token={CANVAS_TOKEN}"
+    )
+
+    data = r.json()
+
+    for post in data:
+        if post["id"] in DB_ANNOUNCEMENTS[course_id]["ID_HISTORY"]:
+            pass
+        else:
+            announcement_url = post["url"]
+            announcement_title = re.sub("<[^<]+?>", "", post["title"])
+            announcement_message = post["message"].replace("</p>", "\n")
+            announcement_message = re.sub("<[^<]+?>", "", announcement_message)
+            announcement_message = announcement_message.strip()
+            announcement_message = f"@here\n```{announcement_message}```"
+
+            if len(announcement_message) > 1900:
+                announcement_message = (
+                    announcement_message[0:1900]
+                    + "...```"
+                    + "\n(meldingen overskrider max antall tegn lov på Discord)"
+                )
+
+            announcement_embed = discord.Embed(
+                title=title, description=welcome_msg, color=0xEDEDED,
+            )
+            announcement_embed.set_author(name="CANVAS ANNOUNCEMENT")
+            announcement_embed.set_thumbnail(url=bot.user.avatar_url)
+
+            subject_channel = bot.get_channel(DB_CONSTANTS["BOT_DEV_CHANNEL_ID"])
+            await subject_channel.send(embed=announcement_embed)
+
+            DB_ANNOUNCEMENTS[course_id]["ID_HISTORY"].append(post["id"])
+
+    Custom.write_JSON("announcements.json", DB_ANNOUNCEMENTS)
+
+
+# EVENTS
 
 
 @bot.event
 async def on_ready():
-    # await print_welcome_message()
+    # await create_welcome_message()
     # await create_roles()
-    # # await create_channels() # NOTE: Not fully implemented. Don't use.
     print(f"{bot.user} is ready!")
 
 
@@ -127,4 +162,4 @@ async def on_raw_reaction_remove(payload):
                 pass
 
 
-bot.run(ENV_TOKEN)
+bot.run(DISCORD_TOKEN)
