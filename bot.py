@@ -4,8 +4,9 @@ import discord
 from discord.ext import commands
 from discord.utils import get
 
-from os import getenv
+from datetime import datetime
 from dotenv import load_dotenv
+from os import getenv
 import requests
 import re
 
@@ -71,7 +72,7 @@ async def create_roles():
             await guild.create_role(name=key, permissions=discord.Permissions(67175424))
 
 
-async def canvas_api_call(course_key: str):
+async def canvas_api_fetch_announcement(course_key: str):
 
     course_id = DB_COURSES[course_key]["id"]
     if not course_id:
@@ -92,27 +93,34 @@ async def canvas_api_call(course_key: str):
             announcement_message = post["message"].replace("</p>", "\n")
             announcement_message = re.sub("<[^<]+?>", "", announcement_message)
             announcement_message = announcement_message.strip()
-            announcement_message = f"@here\n```{announcement_message}```"
+            announcement_message = f"{announcement_message}"
 
             if len(announcement_message) > 1900:
                 announcement_message = (
                     announcement_message[0:1900]
-                    + "...```"
-                    + "\n(meldingen overskrider max antall tegn lov på Discord)"
+                    + "..."
+                    + "\n(meldingen overskrider max antall tegn)"
                 )
 
             announcement_embed = discord.Embed(
-                title=title, description=welcome_msg, color=0xEDEDED,
+                title=announcement_title,
+                description=announcement_message,
+                color=0xEDEDED,
             )
-            announcement_embed.set_author(name="CANVAS ANNOUNCEMENT")
+            announcement_embed.set_author(
+                name="CANVAS ANNOUNCEMENT", url=announcement_url,
+            )
             announcement_embed.set_thumbnail(url=bot.user.avatar_url)
+            announcement_embed.set_footer(
+                text=datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
+            )
 
             subject_channel = bot.get_channel(DB_CONSTANTS["BOT_DEV_CHANNEL_ID"])
             await subject_channel.send(embed=announcement_embed)
 
             DB_ANNOUNCEMENTS[course_id]["ID_HISTORY"].append(post["id"])
 
-    Custom.write_JSON("announcements.json", DB_ANNOUNCEMENTS)
+    Custom.write_JSON("data/announcements.json", DB_ANNOUNCEMENTS)
 
 
 # EVENTS
@@ -123,6 +131,9 @@ async def on_ready():
     # await create_welcome_message()
     # await create_roles()
     print(f"{bot.user} is ready!")
+
+    if MAKE_CANVAS_API_CALLS:
+        await canvas_api_fetch_announcement("IBE151")
 
 
 @bot.event
