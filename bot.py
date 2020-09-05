@@ -2,6 +2,7 @@
 
 import discord
 from discord.ext import commands
+from discord.ext.tasks import loop
 from discord.utils import get
 
 from dotenv import load_dotenv
@@ -110,14 +111,15 @@ async def canvas_api_fetch_announcement(course_key: str):
             announcement_posted_at = announcement_posted_at.replace("T", " ")
             announcement_posted_at = announcement_posted_at.replace("Z", "")
             announcement_embed.set_footer(
-                text=f"Posted by: {announcement['user_name']}\nPosted at: {announcement_posted_at}"
+                text=f"Posted by: {announcement['user_name']}\nPosted on: {announcement_posted_at}"
             )
-            # NOTE: THIS IS FOR TESTING
-            subject_channel = bot.get_channel(DB["DISCORD"]["DEV_CHANNEL_ID"])
-            # subject_channel = bot.get_channel(
-            #     DB["COURSES"][course_key]["DISCORD_CHANNEL_ID"]
-            # )
+            # NOTE: TEST CHANNEL
+            # subject_channel = bot.get_channel(DB["DISCORD"]["DEV_CHANNEL_ID"])
+            subject_channel = bot.get_channel(
+                DB["COURSES"][course_key]["DISCORD_CHANNEL_ID"]
+            )
             await subject_channel.send(embed=announcement_embed)
+            print(course_key, "announcement sent!")
 
             DB["COURSES"][course_key]["CANVAS_PAST_ANNOUNCEMENT_IDS"].append(
                 announcement["id"]
@@ -134,9 +136,6 @@ async def on_ready():
     # await create_welcome_message()
     # await create_subject_roles()
     print(f"{bot.user} is ready!")
-
-    if MAKE_CANVAS_API_CALLS:
-        await canvas_api_fetch_announcement("IBE151")
 
 
 @bot.event
@@ -175,5 +174,20 @@ async def on_raw_reaction_remove(payload):
             except:
                 pass
 
+
+@loop(seconds=60)
+async def check_for_announcements():
+    if MAKE_CANVAS_API_CALLS:
+        for course_key in DB["COURSES"].keys():
+            await canvas_api_fetch_announcement(course_key)
+
+
+@check_for_announcements.before_loop
+async def check_for_announcements_before():
+    await bot.wait_until_ready()
+    print("background task running!")
+
+
+check_for_announcements.start()
 
 bot.run(DISCORD_TOKEN)
