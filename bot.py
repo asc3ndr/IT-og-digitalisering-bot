@@ -105,8 +105,12 @@ async def canvas_api_fetch_announcement(course_key: str):
                 name="CANVAS ANNOUNCEMENT", url=announcement["url"],
             )
             announcement_embed.set_thumbnail(url=bot.user.avatar_url)
+
+            announcement_posted_at = announcement["posted_at"]
+            announcement_posted_at = announcement_posted_at.replace("T", " ")
+            announcement_posted_at = announcement_posted_at.replace("Z", "")
             announcement_embed.set_footer(
-                text=f"{announcement['posted_at']} by {announcement['user_name']}"
+                text=f"Posted by: {announcement['user_name']}\nPosted at: {announcement_posted_at}"
             )
             # NOTE: THIS IS FOR TESTING
             subject_channel = bot.get_channel(DB["DISCORD"]["DEV_CHANNEL_ID"])
