@@ -19,8 +19,7 @@ bot = commands.Bot(command_prefix="!")
 load_dotenv()
 DISCORD_TOKEN = getenv("DISCORD_TOKEN")
 CANVAS_TOKEN = getenv("CANVAS_TOKEN")
-# NOTE: Before commit, restructure to data/d.json
-DB = Custom.read_JSON("test.json")
+DB = Custom.read_JSON("data/database.json")
 MAKE_CANVAS_API_CALLS = True
 
 
@@ -35,11 +34,11 @@ async def create_welcome_message():
         ]
     )
     welcome_msg = f"""
-    For å kunne bruke chat eller voice kanaler på denne serveren må du bli tildelt en Student-rolle av Admin. Men f;r du roper på Admin så vil vi be deg vennligst bytte til ditt virkelige navn ved å finne deg selv i 'medlemslisten' til høyre, høyreklikke på deg selv, og klikk på "Bytt Kallenavn / Change Nickname".
+    For å kunne bruke chat eller voice kanaler på denne serveren må du bli tildelt en Student-rolle av Admin. Før du kontakter oss ber vi deg vennligst bytte til ditt virkelige navn ved å finne deg selv i 'medlemslisten' til høyre, høyreklikke på deg selv, og klikk på "Bytt Kallenavn / Change Nickname".
 
-    Deretter kan du få tilgang til dine emne-kanaler ved å klikk på de korresponderende emojiene under denne meldingen. Du kan fjerne ditt medlemskap fra et emne ved å klikke på den samme emojien om igjen. **Merk:** Selv om du har tilgang til en kanal vil du kun ha lese-rettigheter inntil du får innvilget student-rolle fra Admin.
+    Deretter kan du få tilgang til dine emne-kanaler ved å klikk på de korresponderende emojiene under denne meldingen. Du kan fjerne ditt medlemskap fra et emne ved å klikke på den samme emojien om igjen. **Merk:** Selv om du har tilgang til en kanal vil du kun ha lese-rettigheter inntil du får innvilget student-rollen fra Admin.
 
-    Ta gjerne kontakt med Admin når du er klar, da det kan ta litt tid før vi går igjennom medlemslisten. Takk! :slight_smile:
+    Ta gjerne kontakt når du er klar, da det kan ta litt tid før vi går igjennom medlemslisten. Takk! :slight_smile:
 
     ```
     {courses}
@@ -59,10 +58,10 @@ async def create_welcome_message():
         await msg.add_reaction(value["ICON"])
 
     DB["DISCORD"]["WELCOME_CHANNEL_MSG_ID"] = msg.id
-    Custom.write_JSON("test.json", DB)
+    Custom.write_JSON("data/database.json", DB)
 
 
-async def create_roles():
+async def create_subject_roles():
     guild = bot.get_guild(DB["DISCORD"]["GUILD_ID"])
     for key in DB["COURSES"].keys():
         if not get(guild.roles, name=key):
@@ -82,7 +81,10 @@ async def canvas_api_fetch_announcement(course_key: str):
     data = r.json()
 
     for announcement in data:
-        if announcement["id"] in DB["COURSES"][course_key]["ID_HISTORY"]:
+        if (
+            announcement["id"]
+            in DB["COURSES"][course_key]["CANVAS_PAST_ANNOUNCEMENT_IDS"]
+        ):
             continue
         else:
             announcement_title = re.sub("<[^<]+?>", "", announcement["title"])
@@ -106,15 +108,18 @@ async def canvas_api_fetch_announcement(course_key: str):
             announcement_embed.set_footer(
                 text=f"{announcement['posted_at']} by {announcement['user_name']}"
             )
-
+            # NOTE: THIS IS FOR TESTING
             subject_channel = bot.get_channel(DB["DISCORD"]["DEV_CHANNEL_ID"])
+            # subject_channel = bot.get_channel(
+            #     DB["COURSES"][course_key]["DISCORD_CHANNEL_ID"]
+            # )
             await subject_channel.send(embed=announcement_embed)
 
             DB["COURSES"][course_key]["CANVAS_PAST_ANNOUNCEMENT_IDS"].append(
                 announcement["id"]
             )
 
-    Custom.write_JSON("test.json", DB)
+    Custom.write_JSON("data/database.json", DB)
 
 
 # EVENTS
@@ -123,7 +128,7 @@ async def canvas_api_fetch_announcement(course_key: str):
 @bot.event
 async def on_ready():
     # await create_welcome_message()
-    # await create_roles()
+    # await create_subject_roles()
     print(f"{bot.user} is ready!")
 
     if MAKE_CANVAS_API_CALLS:
