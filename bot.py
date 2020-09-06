@@ -102,6 +102,7 @@ async def canvas_api_fetch_announcement(course_key: str):
             announcement_embed = discord.Embed(
                 title=announcement_title,
                 description=announcement_message,
+                url=announcement["url"],
                 color=0xEDEDED,
             )
             announcement_embed.set_author(
