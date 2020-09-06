@@ -72,6 +72,8 @@ async def create_subject_roles():
 async def canvas_api_fetch_announcement(course_key: str):
 
     course_id = DB["COURSES"][course_key]["CANVAS_ID"]
+    course_name = DB["COURSES"][course_key]["NAME"]
+
     if not course_id:
         return
 
@@ -103,7 +105,7 @@ async def canvas_api_fetch_announcement(course_key: str):
                 color=0xEDEDED,
             )
             announcement_embed.set_author(
-                name=f"{course_key} ANNOUNCEMENT", url=announcement["url"],
+                name=f"{course_key} {course_name}", url=announcement["url"],
             )
             announcement_embed.set_thumbnail(url=bot.user.avatar_url)
 
