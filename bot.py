@@ -103,7 +103,7 @@ async def canvas_api_fetch_announcement(course_key: str):
                 color=0xEDEDED,
             )
             announcement_embed.set_author(
-                name="CANVAS ANNOUNCEMENT", url=announcement["url"],
+                name=f"{course_key} ANNOUNCEMENT", url=announcement["url"],
             )
             announcement_embed.set_thumbnail(url=bot.user.avatar_url)
 
@@ -113,13 +113,18 @@ async def canvas_api_fetch_announcement(course_key: str):
             announcement_embed.set_footer(
                 text=f"Posted by: {announcement['user_name']}\nPosted on: {announcement_posted_at}"
             )
+            announcement_notification = (
+                f"@here Ny kunngjøring for {course_key} i **nyheter** kanalen."
+            )
             # NOTE: TEST CHANNEL
             # subject_channel = bot.get_channel(DB["DISCORD"]["DEV_CHANNEL_ID"])
+            news_channel = bot.get_channel(DB["DISCORD"]["NEWS_CHANNEL_ID"])
             subject_channel = bot.get_channel(
                 DB["COURSES"][course_key]["DISCORD_CHANNEL_ID"]
             )
-            await subject_channel.send(embed=announcement_embed)
-            print(course_key, "announcement sent!")
+            await news_channel.send(embed=announcement_embed)
+            await subject_channel.send(announcement_notification)
+            print(course_key, "announcement fetched!")
 
             DB["COURSES"][course_key]["CANVAS_PAST_ANNOUNCEMENT_IDS"].append(
                 announcement["id"]
