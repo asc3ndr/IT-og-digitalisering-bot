@@ -113,9 +113,7 @@ async def canvas_api_fetch_announcement(course_key: str):
             announcement_embed.set_footer(
                 text=f"Posted by: {announcement['user_name']}\nPosted on: {announcement_posted_at}"
             )
-            announcement_notification = (
-                f"@here Ny kunngjøring for {course_key} i **nyheter** kanalen."
-            )
+            announcement_notification = f"@here Ny kunngjøring for {course_key} i <#{DB['DISCORD']['NEWS_CHANNEL_ID']}>."
             # NOTE: TEST CHANNEL
             # subject_channel = bot.get_channel(DB["DISCORD"]["DEV_CHANNEL_ID"])
             news_channel = bot.get_channel(DB["DISCORD"]["NEWS_CHANNEL_ID"])
