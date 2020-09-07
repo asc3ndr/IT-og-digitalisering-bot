@@ -15,6 +15,7 @@ from custom import Custom
 
 # INITIALIZE
 
+
 bot = commands.Bot(command_prefix="!")
 
 load_dotenv()
@@ -24,7 +25,7 @@ DB = Custom.read_JSON("data/database.json")
 MAKE_CANVAS_API_CALLS = True
 
 
-# FUNCTIONS
+# BOT FUNCTIONS
 
 
 async def create_welcome_message():
@@ -69,20 +70,52 @@ async def create_subject_roles():
             await guild.create_role(name=key, permissions=discord.Permissions(67175424))
 
 
-async def canvas_api_fetch_announcement(course_key: str):
+# CANVAS API FUNCTIONS
 
+
+async def canvas_api_fetch_announcements(course_key: str, access_token: str):
     course_id = DB["COURSES"][course_key]["CANVAS_ID"]
-    course_name = DB["COURSES"][course_key]["NAME"]
+    response = requests.get(
+        f"https://himolde.instructure.com/api/v1/announcements?context_codes[]=course_{course_id}&access_token={access_token}"
+    )
+    return response.json()
 
-    if not course_id:
-        return
 
-    r = requests.get(
-        f"https://himolde.instructure.com/api/v1/announcements?context_codes[]=course_{course_id}&access_token={CANVAS_TOKEN}"
+async def canvas_api_create_announcement(course_key: str, announcement: dict):
+    announcement_title = re.sub("<[^<]+?>", "", announcement["title"])
+    announcement_message = announcement["message"].replace("</p>", "\n")
+    announcement_message = re.sub("<[^<]+?>", "", announcement_message)
+    announcement_message = announcement_message.strip()
+    announcement_message = f"{announcement_message}"
+
+    if len(announcement_message) > 1900:
+        announcement_message = announcement_message[0:1900] + "..."
+
+    announcement_embed = discord.Embed(
+        title=announcement_title,
+        description=announcement_message,
+        url=announcement["url"],
+        color=0xEDEDED,
     )
 
-    data = r.json()
+    announcement_embed.set_author(
+        name=f"{course_key} {DB['COURSES'][course_key]['NAME']}",
+        url=announcement["url"],
+    )
 
+    announcement_embed.set_thumbnail(url=bot.user.avatar_url)
+
+    announcement_posted_at = announcement["posted_at"]
+    announcement_posted_at = announcement_posted_at.replace("T", " ")
+    announcement_posted_at = announcement_posted_at.replace("Z", "")
+    announcement_embed.set_footer(
+        text=f"Posted by: {announcement['user_name']}\nPosted on: {announcement_posted_at}"
+    )
+
+    return announcement_embed
+
+
+async def canvas_api_print_announcements(course_key: str, data: dict):
     for announcement in data:
         if (
             announcement["id"]
@@ -90,57 +123,35 @@ async def canvas_api_fetch_announcement(course_key: str):
         ):
             continue
         else:
-            announcement_title = re.sub("<[^<]+?>", "", announcement["title"])
-            announcement_message = announcement["message"].replace("</p>", "\n")
-            announcement_message = re.sub("<[^<]+?>", "", announcement_message)
-            announcement_message = announcement_message.strip()
-            announcement_message = f"{announcement_message}"
-
-            if len(announcement_message) > 1900:
-                announcement_message = announcement_message[0:1900] + "..."
-
-            announcement_embed = discord.Embed(
-                title=announcement_title,
-                description=announcement_message,
-                url=announcement["url"],
-                color=0xEDEDED,
-            )
-            announcement_embed.set_author(
-                name=f"{course_key} {course_name}", url=announcement["url"],
-            )
-            announcement_embed.set_thumbnail(url=bot.user.avatar_url)
-
-            announcement_posted_at = announcement["posted_at"]
-            announcement_posted_at = announcement_posted_at.replace("T", " ")
-            announcement_posted_at = announcement_posted_at.replace("Z", "")
-            announcement_embed.set_footer(
-                text=f"Posted by: {announcement['user_name']}\nPosted on: {announcement_posted_at}"
+            announcement_embed = await canvas_api_create_announcement(
+                course_key, announcement
             )
             announcement_notification = f"@here Ny kunngjøring for {course_key} i <#{DB['DISCORD']['NEWS_CHANNEL_ID']}>."
-            # NOTE: TEST CHANNEL
-            # subject_channel = bot.get_channel(DB["DISCORD"]["DEV_CHANNEL_ID"])
+
             news_channel = bot.get_channel(DB["DISCORD"]["NEWS_CHANNEL_ID"])
             subject_channel = bot.get_channel(
                 DB["COURSES"][course_key]["DISCORD_CHANNEL_ID"]
             )
+
             await news_channel.send(embed=announcement_embed)
             await subject_channel.send(announcement_notification)
+
+            # dev_channel = bot.get_channel(DB["DISCORD"]["DEV_CHANNEL_ID"])
+            # await dev_channel.send(embed=announcement_embed)
+
             print(course_key, "announcement fetched!")
 
             DB["COURSES"][course_key]["CANVAS_PAST_ANNOUNCEMENT_IDS"].append(
                 announcement["id"]
             )
+            Custom.write_JSON("data/database.json", DB)
 
-    Custom.write_JSON("data/database.json", DB)
 
-
-# EVENTS
+# BOT EVENTS
 
 
 @bot.event
 async def on_ready():
-    # await create_welcome_message()
-    # await create_subject_roles()
     print(f"{bot.user} is ready!")
 
 
@@ -181,11 +192,18 @@ async def on_raw_reaction_remove(payload):
                 pass
 
 
+# BACKGROUND TASKS
+
+
 @loop(seconds=60)
 async def check_for_announcements():
     if MAKE_CANVAS_API_CALLS:
         for course_key in DB["COURSES"].keys():
-            await canvas_api_fetch_announcement(course_key)
+            if not course_key:
+                continue
+
+            data = await canvas_api_fetch_announcements(course_key, CANVAS_TOKEN)
+            await canvas_api_print_announcements(course_key, data)
 
 
 @check_for_announcements.before_loop
@@ -194,6 +212,7 @@ async def check_for_announcements_before():
     print("background task running!")
 
 
-check_for_announcements.start()
+# RUN
 
+check_for_announcements.start()
 bot.run(DISCORD_TOKEN)
