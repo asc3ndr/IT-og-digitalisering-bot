@@ -126,7 +126,7 @@ async def canvas_api_print_announcements(course_key: str, data: dict):
             announcement_embed = await canvas_api_create_announcement(
                 course_key, announcement
             )
-            announcement_notification = f"@here Ny kunngjøring for {course_key} i <#{DB['DISCORD']['NEWS_CHANNEL_ID']}>."
+            announcement_notification = f"@{course_key} Ny kunngjøring for {course_key} i <#{DB['DISCORD']['NEWS_CHANNEL_ID']}>."
 
             news_channel = bot.get_channel(DB["DISCORD"]["NEWS_CHANNEL_ID"])
             subject_channel = bot.get_channel(
