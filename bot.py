@@ -37,6 +37,9 @@ class Poll:
             3: "\u0034\uFE0F\u20E3",
             4: "\u0035\uFE0F\u20E3",
             5: "\u0036\uFE0F\u20E3",
+            6: "\u0037\uFE0F\u20E3",
+            7: "\u0038\uFE0F\u20E3",
+            8: "\u0039\uFE0F\u20E3",
         }
         self.ctx = ctx
         self.question = question
@@ -59,6 +62,9 @@ class Poll:
         return poll_embed
 
     async def create_poll(self):
+        if len(self.alternatives) > 9:
+            raise Exception("Poll received too many args.")
+
         poll_embed = await self.create_poll_embed()
         poll_message = await self.ctx.send(embed=poll_embed)
 
@@ -243,12 +249,14 @@ async def on_raw_reaction_remove(payload):
 
 @bot.event
 async def on_command_error(ctx, error):
-    if isinstance(error, discord.ext.commands.errors.MissingRequiredArgument):
+    if isinstance(
+        error, discord.ext.commands.errors.MissingRequiredArgument
+    ) or isinstance(error, Exception):
         await ctx.send(
             "```Jeg forsto ikke kommandoen. Skriv !help <kommando-navn> for instruksjoner.```"
         )
 
-    # print(f"[ERROR]: {error}")
+    print(f"[ERROR]: {error}")
 
 
 # BOT COMMANDS
@@ -256,7 +264,7 @@ async def on_command_error(ctx, error):
 
 @bot.command(
     name="poll",
-    help='Creates a poll.\nSingle words can be input without quotes\nSentences must be wrapped in quotes.\nExample use: !poll "Example question" "example answer"',
+    help='Creates a poll.\nTakes 1 question and up to 9 alternatives.\nCreates a yes/no poll if it received only the question.\n\nSingle words can be input without quotes\nSentences must be wrapped in quotes.\n\nExample use:\n!poll "How awesome is the bot?" "Amazing!" "Awesome!" "Superb!"',
 )
 async def make_poll(ctx, question: str, *alternatives: str):
     poll = Poll(ctx, question, alternatives=alternatives)
