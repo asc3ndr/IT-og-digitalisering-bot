@@ -35,7 +35,7 @@ async def create_welcome_message():
             for key, value in DB["COURSES"].items()
         ]
     )
-    welcome_msg = f"""
+    welcome_message_text = f"""
     For å kunne bruke chat eller voice kanaler på denne serveren må du bli tildelt en Student-rolle av Admin. Før du kontakter oss ber vi deg vennligst bytte til ditt virkelige navn ved å finne deg selv i 'medlemslisten' til høyre, høyreklikke på deg selv, og klikk på "Bytt Kallenavn / Change Nickname".
 
     Deretter kan du få tilgang til dine emne-kanaler ved å klikk på de korresponderende emojiene under denne meldingen. Du kan fjerne ditt medlemskap fra et emne ved å klikke på den samme emojien om igjen. **Merk:** Selv om du har tilgang til en kanal vil du kun ha lese-rettigheter inntil du får innvilget student-rollen fra Admin.
@@ -48,18 +48,18 @@ async def create_welcome_message():
     """
 
     welcome_embed = discord.Embed(
-        title="Velkommen!", description=welcome_msg, color=0xEDEDED,
+        title="Velkommen!", description=welcome_message_text, color=0xEDEDED,
     )
     welcome_embed.set_author(name="IT og digitalisering")
     welcome_embed.set_thumbnail(url=bot.user.avatar_url)
 
     welcome_channel = bot.get_channel(DB["DISCORD"]["WELCOME_CHANNEL_ID"])
-    msg = await welcome_channel.send(embed=welcome_embed)
+    welcome_message = await welcome_channel.send(embed=welcome_embed)
 
     for value in DB["COURSES"].values():
-        await msg.add_reaction(value["ICON"])
+        await welcome_message.add_reaction(value["ICON"])
 
-    DB["DISCORD"]["WELCOME_CHANNEL_MSG_ID"] = msg.id
+    DB["DISCORD"]["WELCOME_CHANNEL_MSG_ID"] = welcome_message.id
     Custom.write_JSON("data/database.json", DB)
 
 
@@ -126,7 +126,11 @@ async def canvas_api_print_announcements(course_key: str, data: dict):
             announcement_embed = await canvas_api_create_announcement(
                 course_key, announcement
             )
-            announcement_notification = f"@{course_key} Ny kunngjøring for {course_key} i <#{DB['DISCORD']['NEWS_CHANNEL_ID']}>."
+            guild = bot.get_guild(DB["DISCORD"]["GUILD_ID"])
+            role_id = get(guild.roles, name=course_key).id
+            announcement_notification = (
+                f"<@&{role_id}> Ny kunngjøring i <#{DB['DISCORD']['NEWS_CHANNEL_ID']}>."
+            )
 
             news_channel = bot.get_channel(DB["DISCORD"]["NEWS_CHANNEL_ID"])
             subject_channel = bot.get_channel(
@@ -135,9 +139,6 @@ async def canvas_api_print_announcements(course_key: str, data: dict):
 
             await news_channel.send(embed=announcement_embed)
             await subject_channel.send(announcement_notification)
-
-            # dev_channel = bot.get_channel(DB["DISCORD"]["DEV_CHANNEL_ID"])
-            # await dev_channel.send(embed=announcement_embed)
 
             print(course_key, "announcement fetched!")
 
@@ -190,6 +191,71 @@ async def on_raw_reaction_remove(payload):
                 print(f"{user} removed from {role}")
             except:
                 pass
+
+
+@bot.event
+async def on_command_error(ctx, error):
+    if isinstance(error, discord.ext.commands.errors.CheckFailure):
+        await ctx.send(
+            "```Jeg forsto ikke kommandoen. Skriv !help <kommando-navn> for å se instrukser.```"
+        )
+    else:
+        # print(f"{ctx.message.author.name} error")
+        pass
+
+
+# POLL CLASS
+
+
+class Poll:
+    def __init__(self, ctx, question, answers=""):
+        self.icons = {
+            0: "\u0031\uFE0F\u20E3",
+            1: "\u0032\uFE0F\u20E3",
+            2: "\u0033\uFE0F\u20E3",
+            3: "\u0034\uFE0F\u20E3",
+            4: "\u0035\uFE0F\u20E3",
+            5: "\u0036\uFE0F\u20E3",
+        }
+        self.ctx = ctx
+        self.question = question  # expects type=string
+        self.answers = answers  # expects type=list
+
+    async def create_poll_embed(self):
+        poll_embed = discord.Embed(title=self.question, color=0xEDEDED)
+        poll_embed.set_author(name="POLL")
+        poll_embed.set_thumbnail(url=bot.user.avatar_url)
+
+        if self.answers:
+            for key, answer in enumerate(self.answers):
+                poll_embed.add_field(name=self.icons[key], value=answer, inline=False)
+        else:
+            poll_embed.add_field(name=self.icons[0], value="Ja", inline=False)
+            poll_embed.add_field(name=self.icons[1], value="Nei", inline=False)
+
+        return poll_embed
+
+    async def create_poll(self):
+        poll_embed = await self.create_poll_embed()
+        poll_message = await self.ctx.send(embed=poll_embed)
+
+        if self.answers:
+            for key, answer in enumerate(self.answers):
+                await poll_message.add_reaction(self.icons[key])
+        else:
+            await poll_message.add_reaction(self.icons[0])
+            await poll_message.add_reaction(self.icons[1])
+
+
+def check_args(ctx):
+    return len(ctx.message.content.split(" ")) > 1
+
+
+@bot.command(name="poll", help="creates a poll.")
+@commands.check(check_args)
+async def make_poll(ctx, question: str, *answers: str):
+    poll = Poll(ctx, question, answers=answers)
+    await poll.create_poll()
 
 
 # BACKGROUND TASKS
