@@ -250,10 +250,10 @@ def check_args(ctx):
     return len(ctx.message.content.split(" ")) > 1
 
 
-@bot.command(name="poll", help="creates a poll.")
+@bot.command(name="poll", help="Lager en poll.")
 @commands.check(check_args)
-async def make_poll(ctx, question: str, *answers: str):
-    poll = Poll(ctx, question, answers=answers)
+async def make_poll(ctx, sporsmal: str, *svar_alternativ: str):
+    poll = Poll(ctx, question, answers=svar_alternativ)
     await poll.create_poll()
 
 
