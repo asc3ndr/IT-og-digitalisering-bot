@@ -25,6 +25,51 @@ DB = Custom.read_JSON("data/database.json")
 MAKE_CANVAS_API_CALLS = True
 
 
+# POLL CLASS
+
+
+class Poll:
+    def __init__(self, ctx, question, alternatives=""):
+        self.icons = {
+            0: "\u0031\uFE0F\u20E3",
+            1: "\u0032\uFE0F\u20E3",
+            2: "\u0033\uFE0F\u20E3",
+            3: "\u0034\uFE0F\u20E3",
+            4: "\u0035\uFE0F\u20E3",
+            5: "\u0036\uFE0F\u20E3",
+        }
+        self.ctx = ctx
+        self.question = question
+        self.alternatives = alternatives
+
+    async def create_poll_embed(self):
+        poll_embed = discord.Embed(title=self.question, color=0xEDEDED)
+        poll_embed.set_author(name="POLL")
+        poll_embed.set_thumbnail(url=bot.user.avatar_url)
+
+        if self.alternatives:
+            for key, alternative in enumerate(self.alternatives):
+                poll_embed.add_field(
+                    name=self.icons[key], value=alternative, inline=False
+                )
+        else:
+            poll_embed.add_field(name=self.icons[0], value="Ja", inline=False)
+            poll_embed.add_field(name=self.icons[1], value="Nei", inline=False)
+
+        return poll_embed
+
+    async def create_poll(self):
+        poll_embed = await self.create_poll_embed()
+        poll_message = await self.ctx.send(embed=poll_embed)
+
+        if self.alternatives:
+            for key, alternative in enumerate(self.alternatives):
+                await poll_message.add_reaction(self.icons[key])
+        else:
+            await poll_message.add_reaction(self.icons[0])
+            await poll_message.add_reaction(self.icons[1])
+
+
 # BOT FUNCTIONS
 
 
@@ -195,65 +240,20 @@ async def on_raw_reaction_remove(payload):
 
 @bot.event
 async def on_command_error(ctx, error):
-    if isinstance(error, discord.ext.commands.errors.CheckFailure):
+    if isinstance(error, discord.ext.commands.errors.MissingRequiredArgument):
         await ctx.send(
             "```Jeg forsto ikke kommandoen. Skriv !help <kommando-navn> for å se instrukser.```"
         )
 
-    print(f"{ctx.message.author} - [ERROR]: {error}")
+    print(f"[ERROR]: {error}")
 
 
-# POLL CLASS
+# BOT COMMANDS
 
 
-class Poll:
-    def __init__(self, ctx, question, answers=""):
-        self.icons = {
-            0: "\u0031\uFE0F\u20E3",
-            1: "\u0032\uFE0F\u20E3",
-            2: "\u0033\uFE0F\u20E3",
-            3: "\u0034\uFE0F\u20E3",
-            4: "\u0035\uFE0F\u20E3",
-            5: "\u0036\uFE0F\u20E3",
-        }
-        self.ctx = ctx
-        self.question = question  # expects type=string
-        self.answers = answers  # expects type=list
-
-    async def create_poll_embed(self):
-        poll_embed = discord.Embed(title=self.question, color=0xEDEDED)
-        poll_embed.set_author(name="POLL")
-        poll_embed.set_thumbnail(url=bot.user.avatar_url)
-
-        if self.answers:
-            for key, answer in enumerate(self.answers):
-                poll_embed.add_field(name=self.icons[key], value=answer, inline=False)
-        else:
-            poll_embed.add_field(name=self.icons[0], value="Ja", inline=False)
-            poll_embed.add_field(name=self.icons[1], value="Nei", inline=False)
-
-        return poll_embed
-
-    async def create_poll(self):
-        poll_embed = await self.create_poll_embed()
-        poll_message = await self.ctx.send(embed=poll_embed)
-
-        if self.answers:
-            for key, answer in enumerate(self.answers):
-                await poll_message.add_reaction(self.icons[key])
-        else:
-            await poll_message.add_reaction(self.icons[0])
-            await poll_message.add_reaction(self.icons[1])
-
-
-def check_args(ctx):
-    return len(ctx.message.content.split(" ")) > 1
-
-
-@bot.command(name="poll", help="Lager en poll.")
-@commands.check(check_args)
-async def make_poll(ctx, sporsmal: str, *svar_alternativ: str):
-    poll = Poll(ctx, sporsmal, answers=svar_alternativ)
+@bot.command(name="poll", help="Creates a poll")
+async def make_poll(ctx, question: str, *alternatives: str):
+    poll = Poll(ctx, question, alternatives=alternatives)
     await poll.create_poll()
 
 
