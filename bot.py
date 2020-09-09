@@ -245,10 +245,10 @@ async def on_raw_reaction_remove(payload):
 async def on_command_error(ctx, error):
     if isinstance(error, discord.ext.commands.errors.MissingRequiredArgument):
         await ctx.send(
-            "```Jeg forsto ikke kommandoen. Skriv !help <kommando-navn> for å se instrukser.```"
+            "```Jeg forsto ikke kommandoen. Skriv !help <kommando-navn> for instruksjoner.```"
         )
 
-    print(f"[ERROR]: {error}")
+    # print(f"[ERROR]: {error}")
 
 
 # BOT COMMANDS
