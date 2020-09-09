@@ -269,6 +269,7 @@ async def on_command_error(ctx, error):
 async def make_poll(ctx, question: str, *alternatives: str):
     poll = Poll(ctx, question, alternatives=alternatives)
     await poll.create_poll()
+    print(f"Poll created by {ctx.message.author} in {ctx.channel.name}")
 
 
 # BACKGROUND TASKS
