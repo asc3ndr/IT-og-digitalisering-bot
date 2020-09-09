@@ -253,7 +253,7 @@ def check_args(ctx):
 @bot.command(name="poll", help="Lager en poll.")
 @commands.check(check_args)
 async def make_poll(ctx, sporsmal: str, *svar_alternativ: str):
-    poll = Poll(ctx, question, answers=svar_alternativ)
+    poll = Poll(ctx, sporsmal, answers=svar_alternativ)
     await poll.create_poll()
 
 
