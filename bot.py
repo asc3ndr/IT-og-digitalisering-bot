@@ -198,6 +198,9 @@ async def canvas_api_print_announcements(course_key: str, data: dict):
 
 @bot.event
 async def on_ready():
+    await bot.change_presence(
+        activity=discord.Activity(type=discord.ActivityType.watching, name="for !help")
+    )
     print(f"{bot.user} is ready!")
 
 
@@ -251,7 +254,10 @@ async def on_command_error(ctx, error):
 # BOT COMMANDS
 
 
-@bot.command(name="poll", help="Creates a poll")
+@bot.command(
+    name="poll",
+    help='Creates a poll.\nSingle words can be input without quotes\nSentences must be wrapped in quotes.\nExample use: !poll "Example question" "example answer"',
+)
 async def make_poll(ctx, question: str, *alternatives: str):
     poll = Poll(ctx, question, alternatives=alternatives)
     await poll.create_poll()
