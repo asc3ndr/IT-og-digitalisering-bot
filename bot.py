@@ -199,9 +199,8 @@ async def on_command_error(ctx, error):
         await ctx.send(
             "```Jeg forsto ikke kommandoen. Skriv !help <kommando-navn> for å se instrukser.```"
         )
-    else:
-        # print(f"{ctx.message.author.name} error")
-        pass
+
+    print(f"{ctx.message.author} - [ERROR]: {error}")
 
 
 # POLL CLASS
