@@ -213,7 +213,7 @@ async def on_ready():
 @bot.event
 async def on_raw_reaction_add(payload):
     if payload.user_id == bot.user:
-        pass
+        return
 
     if payload.message_id != DB["DISCORD"]["WELCOME_CHANNEL_MSG_ID"]:
         return
@@ -257,6 +257,22 @@ async def on_command_error(ctx, error):
         )
 
     print(f"[ERROR]: {error}")
+
+
+@bot.event
+async def on_message(message):
+    if message.author == bot.user:
+        return
+
+    if message.channel.id in DB["DISCORD"]["SUBJECT_TASK_CHANNEL_IDS"]:
+        content = message.content
+        forbidden_domains = ["https://tenor.com/", "https://giphy.com/"]
+
+        for forbidden_domain in forbidden_domains:
+            if forbidden_domain in content:
+                await message.delete()
+
+    await bot.process_commands(message)
 
 
 # BOT COMMANDS
