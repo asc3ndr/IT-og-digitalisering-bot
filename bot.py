@@ -233,7 +233,7 @@ async def on_raw_reaction_add(payload):
 @bot.event
 async def on_raw_reaction_remove(payload):
     if payload.user_id == bot.user:
-        pass
+        return
 
     if payload.message_id != DB["DISCORD"]["WELCOME_CHANNEL_MSG_ID"]:
         return
