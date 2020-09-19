@@ -235,6 +235,9 @@ async def on_raw_reaction_remove(payload):
     if payload.user_id == bot.user:
         pass
 
+    if payload.message_id != DB["DISCORD"]["WELCOME_CHANNEL_MSG_ID"]:
+        return
+
     for key, value in DB["COURSES"].items():
         if payload.emoji.name == value["ICON"]:
             guild = bot.get_guild(DB["DISCORD"]["GUILD_ID"])
