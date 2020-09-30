@@ -179,11 +179,11 @@ async def canvas_api_print_announcements(course_key: str, data: dict):
             )
             guild = bot.get_guild(DB["DISCORD"]["GUILD_ID"])
             role_id = get(guild.roles, name=course_key).id
-            announcement_notification = (
-                f"<@&{role_id}> Ny kunngjøring i <#{DB['DISCORD']['NEWS_CHANNEL_ID']}>."
-            )
+            announcement_notification = f"<@&{role_id}> Ny kunngjøring i <#{DB['COURSES'][course_key]['DISCORD_ANNOUNCEMENT_CHANNEL_ID']}>."
 
-            news_channel = bot.get_channel(DB["DISCORD"]["NEWS_CHANNEL_ID"])
+            news_channel = bot.get_channel(
+                DB["COURSES"][course_key]["DISCORD_ANNOUNCEMENT_CHANNEL_ID"]
+            )
             subject_channel = bot.get_channel(
                 DB["COURSES"][course_key]["DISCORD_CHANNEL_ID"]
             )
