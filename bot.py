@@ -16,13 +16,14 @@ from custom import Custom
 # INITIALIZE
 
 
-bot = commands.Bot(command_prefix="!")
-
 load_dotenv()
 DISCORD_TOKEN = getenv("DISCORD_TOKEN")
 CANVAS_TOKEN = getenv("CANVAS_TOKEN")
 DB = Custom.read_JSON("data/database.json")
 MAKE_CANVAS_API_CALLS = True
+COMMAND_PREFIX = "$"
+
+bot = commands.Bot(command_prefix=COMMAND_PREFIX)
 
 
 # POLL CLASS
@@ -205,7 +206,7 @@ async def canvas_api_print_announcements(course_key: str, data: dict):
 @bot.event
 async def on_ready():
     await bot.change_presence(
-        activity=discord.Activity(type=discord.ActivityType.watching, name="for !help")
+        activity=discord.Activity(type=discord.ActivityType.watching, name="for $help")
     )
     print(f"{bot.user} is ready!")
 
@@ -255,9 +256,9 @@ async def on_command_error(ctx, error):
     if isinstance(
         error, discord.ext.commands.errors.MissingRequiredArgument
     ) or isinstance(error, Exception):
-        await ctx.send(
-            "```Jeg forsto ikke kommandoen. Skriv !help <kommando-navn> for instruksjoner.```"
-        )
+        if hasattr(ctx.command, "name"):
+            help_message = f"```${ctx.command.name} {ctx.command.signature}\n\n{ctx.command.help}```"
+            await ctx.author.send(help_message)
 
     print(f"[ERROR]: {error}")
 
@@ -283,7 +284,7 @@ async def on_message(message):
 
 @bot.command(
     name="poll",
-    help='Creates a poll.\nTakes 1 question and up to 9 alternatives.\nCreates a yes/no poll if it received only the question.\n\nSingle words can be input without quotes\nSentences must be wrapped in quotes.\n\nExample use:\n!poll "How awesome is the bot?" "Amazing!" "Awesome!" "Superb!"',
+    help='Creates a poll.\nTakes 1 question and up to 9 alternatives.\nCreates a yes/no poll if it received only the question.\n\nSingle words can be input without quotes\nSentences must be wrapped in quotes.\n\nExample use:\n$poll "How awesome is the bot?" "Amazing!" "Awesome!" "Superb!"',
 )
 async def make_poll(ctx, question: str, *alternatives: str):
     poll = Poll(ctx, question, alternatives=alternatives)
