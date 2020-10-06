@@ -2,8 +2,8 @@
 
 import discord
 from discord.ext import commands
-from discord.ext.tasks import loop
 from discord.utils import get
+from discord.ext.tasks import loop
 
 from dotenv import load_dotenv
 from os import getenv
@@ -134,37 +134,30 @@ async def canvas_api_fetch_announcements(course_key: str, access_token: str):
 
 
 async def canvas_api_create_announcement(course_key: str, announcement: dict):
-    announcement_title = re.sub("<[^<]+?>", "", announcement["title"])
-    announcement_message = announcement["message"].replace("</p>", "\n")
-    announcement_message = re.sub("<[^<]+?>", "", announcement_message)
-    announcement_message = announcement_message.strip()
-    announcement_message = f"{announcement_message}"
+    title = re.sub("<[^<]+?>", "", announcement["title"])
+    title_url = announcement["url"]
 
-    if len(announcement_message) > 1900:
-        announcement_message = announcement_message[0:1900] + "..."
+    author_name = f"{course_key} {DB['COURSES'][course_key]['NAME']}"
+    author_url = announcement["url"]
 
-    announcement_embed = discord.Embed(
-        title=announcement_title,
-        description=announcement_message,
-        url=announcement["url"],
-        color=0xEDEDED,
+    thumbnail = bot.user.avatar_url
+
+    message = announcement["message"].replace("</p>", "\n")
+    message = re.sub("<[^<]+?>", "", message)
+    message = message.strip()
+    message = f"{message}"
+    if len(message) > 1900:
+        message = message[0:1900] + "..."
+
+    footer = announcement["posted_at"]
+    footer = footer.replace("T", " ")
+    footer = footer.replace("Z", "")
+    footer = f"Posted by: {announcement['user_name']}\nPosted on: {footer}"
+
+    embed = Custom.create_embed(
+        title, title_url, author_name, author_url, thumbnail, message, footer
     )
-
-    announcement_embed.set_author(
-        name=f"{course_key} {DB['COURSES'][course_key]['NAME']}",
-        url=announcement["url"],
-    )
-
-    announcement_embed.set_thumbnail(url=bot.user.avatar_url)
-
-    announcement_posted_at = announcement["posted_at"]
-    announcement_posted_at = announcement_posted_at.replace("T", " ")
-    announcement_posted_at = announcement_posted_at.replace("Z", "")
-    announcement_embed.set_footer(
-        text=f"Posted by: {announcement['user_name']}\nPosted on: {announcement_posted_at}"
-    )
-
-    return announcement_embed
+    return embed
 
 
 async def canvas_api_print_announcements(course_key: str, data: dict):
@@ -290,6 +283,46 @@ async def make_poll(ctx, question: str, *alternatives: str):
     poll = Poll(ctx, question, alternatives=alternatives)
     await poll.create_poll()
     print(f"Poll created by {ctx.message.author} in {ctx.channel.name}")
+
+
+@bot.command(
+    name="updatesubjects", help="Updates the subjects embed in #emner",
+)
+@commands.has_role("Admin")
+async def update_subjects(ctx):
+    id = DB["DISCORD"]["WELCOME_CHANNEL_MSG_ID"]
+
+    for channel in bot.get_all_channels():
+        try:
+            msg = await channel.fetch_message(id)
+            break
+        except:
+            continue
+
+    if msg:
+        title_text = "Tilgjengelige Emnekanaler"
+        title_url = ""
+        author_name = "Høgskolen i Molde"
+        author_url = ""
+        thumbnail = bot.user.avatar_url
+        message = "".join(
+            [
+                f"\n\t{value['ICON']}\t{key}\t{value['NAME']}"
+                if key not in ["Admin", "Student"]
+                else ""
+                for key, value in DB["COURSES"].items()
+            ]
+        )
+        message = f"""
+        klikk på de korresponderende emojiene under meldingen for å få tilgang til emnets kanaler. Du kan fjerne medlemskap fra et emne ved å klikke på den samme emojien om igjen.
+        ```{message}```
+        """
+        footer = ""
+
+        new_embed = Custom.create_embed(
+            title_text, title_url, author_name, author_url, thumbnail, message, footer
+        )
+        await msg.edit(embed=new_embed)
 
 
 # BACKGROUND TASKS

@@ -18,27 +18,18 @@ class Custom:
             dump(obj, file)
 
     @staticmethod
-    def create_embed(title, message, url, author_name, author_url, footer):
-        title = re.sub("<[^<]+?>", "", title)
-        message = message.replace("</p>", "\n")
-        message = re.sub("<[^<]+?>", "", message)
-        message = message.strip()
-
+    def create_embed(
+        title_text, title_url, author_name, author_url, thumbnail, message, footer
+    ):
         if len(message) > 1900:
             message = message[0:1900] + "..."
-
         embed = discord.Embed(
-            title=title, description=message, url=url, color=0xEDEDED,
+            title=title_text, description=message, url=title_url, color=0xEDEDED,
         )
-
         embed.set_author(
-            name=f"{course_key} {DB['COURSES'][course_key]['NAME']}",
-            url=announcement["url"],
+            name=author_name, url=author_url,
         )
-
-        embed.set_thumbnail(url=bot.user.avatar_url)
-
+        embed.set_thumbnail(url=thumbnail)
         embed.set_footer(text=footer)
-
         return embed
 
