@@ -17,8 +17,6 @@ class CanvasAPI:
 
         if response.status_code == 200:
             return response.json()
-
-        print(f"{response.status_code}: {response.json()}")
         return None
 
     @staticmethod
@@ -66,5 +64,3 @@ class CanvasAPI:
 
         await news_channel.send(f"<@&{role_id}>")
         await news_channel.send(embed=announcement_embed)
-
-        print(f"{course['role']} announcement fetched!")

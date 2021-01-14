@@ -20,7 +20,10 @@ from bot_db import DigitDB
 
 load_dotenv()
 DISCORD_TOKEN = getenv("DISCORD_TOKEN")
-CANVAS_TOKEN = getenv("CANVAS_TOKEN")
+AMR_TOKEN = getenv("AMR_TOKEN")
+SIG_TOKEN = getenv("SIG_TOKEN")
+KNU_TOKEN = getenv("KNU_TOKEN")
+CANVAS_TOKENS = {"AMR": AMR_TOKEN, "SIG": SIG_TOKEN, "KNU": KNU_TOKEN}
 DATABASE = DigitDB()
 COMMAND_PREFIX = "$"
 TIME = lambda: datetime.now().strftime("%d/%m/%Y %H:%M:%S")
@@ -105,6 +108,9 @@ async def on_message(message):
         for forbidden_domain in forbidden_domains:
             if forbidden_domain in content:
                 await message.delete()
+                await message.author.send(
+                    "Vi ønsker å holde oppgavekanalene ryddig og av den grunn ble din gif automatisk fjernet. Takk for at du hjelper til og er aktiv i kanalen! :-)"
+                )
 
     await bot.process_commands(message)
 
@@ -123,7 +129,8 @@ async def make_poll(ctx, question: str, *alternatives: str):
 
 
 @bot.command(
-    name="updatecourses", help="Updates the courses embed in #emner",
+    name="updatecourses",
+    help="Updates the embed in #emner to show the available active courses",
 )
 @commands.has_role("Admin")
 async def update_courses(ctx):
@@ -131,7 +138,7 @@ async def update_courses(ctx):
     message = await channel.fetch_message(DATABASE.WELCOME_CHANNEL_MSG_ID)
     courses = DATABASE.get_all_courses()
 
-    title = "Tilgjengelige Emnekanaler"
+    title = "Tilgjengelige Emnekanaler, Vår 2021"
     title_url = ""
     author = "Høgskolen i Molde"
     author_url = ""
@@ -187,7 +194,8 @@ async def update_courses(ctx):
 
 
 @bot.command(
-    name="updateroles", help="Update roles for the active courses",
+    name="updateroles",
+    help="Removes inactive course roles and adds new, active course roles.",
 )
 @commands.has_role("Admin")
 async def update_course_roles(ctx):
@@ -220,7 +228,11 @@ async def check_for_announcements():
     for course in DATABASE.get_all_courses():
 
         if course["active"] and course["_id"] > 10:
-            announcements = await CanvasAPI.fetch_announcements(course, CANVAS_TOKEN)
+
+            token = CANVAS_TOKENS[course["token"]]
+            # token = SIG_TOKEN if course["token"] == "SIG" else AMR_TOKEN
+
+            announcements = await CanvasAPI.fetch_announcements(course, token)
 
             if announcements:
                 for announcement in announcements:
@@ -230,13 +242,14 @@ async def check_for_announcements():
                     await CanvasAPI.print_announcement(
                         bot, DATABASE.GUILD_ID, course, announcement
                     )
+                    print(f"[{TIME()}]\t{course['role']} announcement fetched!")
                     DATABASE.add_course_announcement(course["_id"], announcement["id"])
 
 
 @check_for_announcements.before_loop
 async def check_for_announcements_before():
     await bot.wait_until_ready()
-    print("background task running!")
+    print(f"[{TIME()}]\tBackground Task Running!")
 
 
 # RUN
