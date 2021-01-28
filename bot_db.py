@@ -1,22 +1,6 @@
 #!/usr/bin/python3
 from pymongo import MongoClient
 
-# from Crypto.Cipher import AES
-
-# key = b"Sixteen byte key"
-# cipher = AES.new(key, AES.MODE_EAX)
-# nonce = cipher.nonce
-# ciphertext, tag = cipher.encrypt_and_digest(b"THEPASSWORD")
-# print(nonce, ciphertext, tag)
-
-# cipher = AES.new(key, AES.MODE_EAX, nonce=nonce)
-# plaintext = cipher.decrypt(ciphertext)
-# try:
-#     cipher.verify(tag)
-#     print("The message is authentic:", plaintext.decode("utf-8"))
-# except ValueError:
-#     print("Key incorrect or message corrupted")
-
 
 class DigitDB:
     def __init__(self):
@@ -104,210 +88,213 @@ class DigitDB:
 
 if __name__ == "__main__":
 
-    MongoClient("mongodb://localhost:27017/").drop_database("digit")
+    drop = False
+    if drop:
 
-    # # Initialize
-    x = DigitDB()
+        MongoClient("mongodb://localhost:27017/").drop_database("digit")
 
-    # Bachelor i IT og digitalisering
-    x.add_course(
-        1141,
-        "Bachelor i IT og digitalisering",
-        "🐋",
-        "Student",
-        "AMR",
-        685434530193997834,
-        686318504924020737,
-        [
-            20279,
-            20037,
-            20344,
-            20584,
-            20686,
-            20735,
-            21391,
-            21450,
-            21504,
-            21703,
-            21787,
-            22154,
-            22390,
-        ],
-    )
-    # Bachelor i IT og digitalisering - 2019/22
-    x.add_course(
-        1140,
-        "Bachelor i IT og digitalisering - 2019/22",
-        "🐋",
-        "Student",
-        "AMR",
-        685434530193997834,
-        686318504924020737,
-    )
-    # Avdelingene for logistikk, økonomi og samfunnsfag
-    x.add_course(
-        69,
-        "Avdelingene for logistikk, \u00f8konomi og samfunnsfag",
-        "🐋",
-        "Student",
-        "AMR",
-        685434530193997834,
-        686318504924020737,
-    )
-    # HiMolde Student Info
-    x.add_course(
-        65,
-        "HiMolde Student Info",
-        "🐋",
-        "Student",
-        "AMR",
-        685434530193997834,
-        686318504924020737,
-        [
-            19588,
-            19511,
-            19440,
-            19246,
-            19244,
-            19929,
-            19930,
-            19934,
-            19935,
-            19936,
-            20138,
-            20139,
-            20839,
-            21023,
-            21024,
-            21074,
-            21075,
-            21184,
-            21250,
-            21379,
-            21393,
-            21599,
-            21603,
-            21641,
-            21651,
-            21670,
-            22042,
-            22093,
-            22094,
-            22143,
-            22148,
-            22268,
-            22346,
-            22373,
-            22591,
-            22592,
-            22682,
-            22697,
-        ],
-    )
-    ### 1 YEAR ###
-    # Webutvikling
-    x.add_course(
-        1906,
-        "Webutvikling",
-        "🐵",
-        "IBE102",
-        "SIG",
-        685437347181101078,
-        760845116423274497,
-        [22338, 22271, 22528, 22550],
-    )
-    # Virksomhetsdata
-    x.add_course(
-        1925,
-        "Virksomhetsdata",
-        "🐓",
-        "IBE120",
-        "SIG",
-        685437536637943819,
-        760845220610441236,
-        [22494, 22695],
-    )
-    # Databaser
-    x.add_course(
-        1913,
-        "Database",
-        "🐧",
-        "IBE211",
-        "SIG",
-        685437701411045404,
-        760845011167608832,
-        [22339, 22252, 22605],
-    )
-    # e-Business
-    x.add_course(
-        1944,
-        "e-Business",
-        "🍌",
-        "LOG206",
-        "SIG",
-        685437749301739520,
-        760845340323872838,
-        [22329, 22251, 22413, 22527, 22536, 22584, 22723],
-    )
+        # # Initialize
+        x = DigitDB()
 
-    ### 2 YEAR ###
-    # Statistikk II
-    x.add_course(
-        1904,
-        "Statistikk II",
-        "🍎",
-        "MAT210",
-        "AMR",
-        792789373510877195,
-        792788710180519956,
-        [22786],
-    )
-    # Statistikk I
-    x.add_course(
-        1901,
-        "Statistikk I",
-        "🐙",
-        "MAT110",
-        "AMR",
-        792940285629169714,
-        792939915239358474,
-        [
-            22666,
-            22665,
-            22655,
-            22609,
-            22556,
-            22508,
-            22465,
-            22427,
-            22698,
-            22774,
-            22775,
-            22785,
-        ],
-    )
-    # Mikroøkonomi
-    x.add_course(
-        1861,
-        "Mikro\u00f8konomi",
-        "🍡",
-        "S\u00D8K200",
-        "AMR",
-        792790466470084619,
-        792790324849541170,
-        [22355, 22567, 22676, 22677, 22754],
-    )
-    # Innkjøpsledelse og Forhandlinger
-    x.add_course(
-        1835,
-        "Innkj\u00f8psledelse",
-        "💸",
-        "LOG505",
-        "KNU",
-        799317956378492930,
-        799317753348751360,
-        [22711, 22626, 22531, 22497],
-    )
+        # Bachelor i IT og digitalisering
+        x.add_course(
+            1141,
+            "Bachelor i IT og digitalisering",
+            "🐋",
+            "Student",
+            "AMR",
+            685434530193997834,
+            686318504924020737,
+            [
+                20279,
+                20037,
+                20344,
+                20584,
+                20686,
+                20735,
+                21391,
+                21450,
+                21504,
+                21703,
+                21787,
+                22154,
+                22390,
+            ],
+        )
+        # Bachelor i IT og digitalisering - 2019/22
+        x.add_course(
+            1140,
+            "Bachelor i IT og digitalisering - 2019/22",
+            "🐋",
+            "Student",
+            "AMR",
+            685434530193997834,
+            686318504924020737,
+        )
+        # Avdelingene for logistikk, økonomi og samfunnsfag
+        x.add_course(
+            69,
+            "Avdelingene for logistikk, \u00f8konomi og samfunnsfag",
+            "🐋",
+            "Student",
+            "AMR",
+            685434530193997834,
+            686318504924020737,
+        )
+        # HiMolde Student Info
+        x.add_course(
+            65,
+            "HiMolde Student Info",
+            "🐋",
+            "Student",
+            "AMR",
+            685434530193997834,
+            686318504924020737,
+            [
+                19588,
+                19511,
+                19440,
+                19246,
+                19244,
+                19929,
+                19930,
+                19934,
+                19935,
+                19936,
+                20138,
+                20139,
+                20839,
+                21023,
+                21024,
+                21074,
+                21075,
+                21184,
+                21250,
+                21379,
+                21393,
+                21599,
+                21603,
+                21641,
+                21651,
+                21670,
+                22042,
+                22093,
+                22094,
+                22143,
+                22148,
+                22268,
+                22346,
+                22373,
+                22591,
+                22592,
+                22682,
+                22697,
+            ],
+        )
+        ### 1 YEAR ###
+        # Webutvikling
+        x.add_course(
+            1906,
+            "Webutvikling",
+            "🐵",
+            "IBE102",
+            "SIG",
+            685437347181101078,
+            760845116423274497,
+            [22338, 22271, 22528, 22550],
+        )
+        # Virksomhetsdata
+        x.add_course(
+            1925,
+            "Virksomhetsdata",
+            "🐓",
+            "IBE120",
+            "SIG",
+            685437536637943819,
+            760845220610441236,
+            [22494, 22695],
+        )
+        # Databaser
+        x.add_course(
+            1913,
+            "Database",
+            "🐧",
+            "IBE211",
+            "SIG",
+            685437701411045404,
+            760845011167608832,
+            [22339, 22252, 22605],
+        )
+        # e-Business
+        x.add_course(
+            1944,
+            "e-Business",
+            "🍌",
+            "LOG206",
+            "SIG",
+            685437749301739520,
+            760845340323872838,
+            [22329, 22251, 22413, 22527, 22536, 22584, 22723],
+        )
+
+        ### 2 YEAR ###
+        # Statistikk II
+        x.add_course(
+            1904,
+            "Statistikk II",
+            "🍎",
+            "MAT210",
+            "AMR",
+            792789373510877195,
+            792788710180519956,
+            [22786],
+        )
+        # Statistikk I
+        x.add_course(
+            1901,
+            "Statistikk I",
+            "🐙",
+            "MAT110",
+            "AMR",
+            792940285629169714,
+            792939915239358474,
+            [
+                22666,
+                22665,
+                22655,
+                22609,
+                22556,
+                22508,
+                22465,
+                22427,
+                22698,
+                22774,
+                22775,
+                22785,
+            ],
+        )
+        # Mikroøkonomi
+        x.add_course(
+            1861,
+            "Mikro\u00f8konomi",
+            "🍡",
+            "S\u00D8K200",
+            "AMR",
+            792790466470084619,
+            792790324849541170,
+            [22355, 22567, 22676, 22677, 22754],
+        )
+        # Innkjøpsledelse og Forhandlinger
+        x.add_course(
+            1835,
+            "Innkj\u00f8psledelse",
+            "💸",
+            "LOG505",
+            "KNU",
+            799317956378492930,
+            799317753348751360,
+            [22711, 22626, 22531, 22497],
+        )
 
     # Show Results
     # a = x.get_all_courses()

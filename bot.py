@@ -228,10 +228,7 @@ async def check_for_announcements():
     for course in DATABASE.get_all_courses():
 
         if course["active"] and course["_id"] > 10:
-
             token = CANVAS_TOKENS[course["token"]]
-            # token = SIG_TOKEN if course["token"] == "SIG" else AMR_TOKEN
-
             announcements = await CanvasAPI.fetch_announcements(course, token)
 
             if announcements:
