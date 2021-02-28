@@ -93,7 +93,7 @@ if __name__ == "__main__":
 
         MongoClient("mongodb://localhost:27017/").drop_database("digit")
 
-        # # Initialize
+        # Initialize
         x = DigitDB()
 
         # Bachelor i IT og digitalisering
@@ -191,6 +191,7 @@ if __name__ == "__main__":
                 22697,
             ],
         )
+
         ### 1 YEAR ###
         # Webutvikling
         x.add_course(
@@ -294,6 +295,16 @@ if __name__ == "__main__":
             799317956378492930,
             799317753348751360,
             [22711, 22626, 22531, 22497],
+        )
+        # Lager og Produksjonsplanlegging
+        x.add_course(
+            1918,
+            "Lager og Produksjon",
+            "🚚",
+            "SCM200",
+            "",
+            805542267619508265,
+            805539875851730954,
         )
 
     # Show Results

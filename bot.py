@@ -227,7 +227,7 @@ async def update_course_roles(ctx):
 async def check_for_announcements():
     for course in DATABASE.get_all_courses():
 
-        if course["active"] and course["_id"] > 10:
+        if course["active"] and not course["token"] == "":
             token = CANVAS_TOKENS[course["token"]]
             announcements = await CanvasAPI.fetch_announcements(course, token)
 
