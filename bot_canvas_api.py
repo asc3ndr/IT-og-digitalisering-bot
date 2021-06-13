@@ -11,7 +11,7 @@ class CanvasAPI:
     @staticmethod
     async def fetch_announcements(course: dict, access_token: str):
         response = requests.get(
-            f"https://himolde.instructure.com/api/v1/announcements?context_codes[]=course_{course['_id']}",
+            f"https://himolde.instructure.com/api/v1/announcements?context_codes[]=course_{course['canvas_id']}",
             headers={"Authorization": f"Bearer {access_token}"},
         )
 

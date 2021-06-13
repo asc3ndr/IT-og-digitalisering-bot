@@ -20,12 +20,9 @@ from bot_db import DigitDB
 
 load_dotenv()
 DISCORD_TOKEN = getenv("DISCORD_TOKEN")
-AMR_TOKEN = getenv("AMR_TOKEN")
-SIG_TOKEN = getenv("SIG_TOKEN")
-KNU_TOKEN = getenv("KNU_TOKEN")
-CANVAS_TOKENS = {"AMR": AMR_TOKEN, "SIG": SIG_TOKEN, "KNU": KNU_TOKEN}
+CANVAS_TOKENS = {"AMR": getenv("AMR_TOKEN")}
 DATABASE = DigitDB()
-COMMAND_PREFIX = "$"
+COMMAND_PREFIX = "/"
 TIME = lambda: datetime.now().strftime("%d/%m/%Y %H:%M:%S")
 
 bot = commands.Bot(command_prefix=COMMAND_PREFIX)
@@ -38,7 +35,7 @@ bot = commands.Bot(command_prefix=COMMAND_PREFIX)
 async def on_ready():
     await bot.change_presence(
         activity=discord.Activity(
-            type=discord.ActivityType.watching, name=f"for {COMMAND_PREFIX}help"
+            type=discord.ActivityType.listening, name=f" {COMMAND_PREFIX}help"
         )
     )
     print(f"[{TIME()}]\t{bot.user} is ready!")
@@ -93,7 +90,7 @@ async def on_command_error(ctx, error):
             help_message = f"```{COMMAND_PREFIX}{ctx.command.name} {ctx.command.signature}\n\n{ctx.command.help}```"
             await ctx.author.send(help_message)
 
-    print(f"[{TIME()}]\t{error}")
+    # print(f"[{TIME()}]\t{error}")
 
 
 @bot.event
@@ -101,7 +98,7 @@ async def on_message(message):
     if message.author == bot.user:
         return
 
-    if message.channel.id in DATABASE.COURSE_TASK_CHANNEL_IDS:
+    if message.channel.id in DATABASE.get_all_courses("task_channel_id"):
         content = message.content
         forbidden_domains = ["https://tenor.com/", "https://giphy.com/"]
 
@@ -138,7 +135,7 @@ async def update_courses(ctx):
     message = await channel.fetch_message(DATABASE.WELCOME_CHANNEL_MSG_ID)
     courses = DATABASE.get_all_courses()
 
-    title = "Tilgjengelige Emnekanaler, Vår 2021"
+    title = "Tilgjengelige Emnekanaler"
     title_url = ""
     author = "Høgskolen i Molde"
     author_url = ""
@@ -152,7 +149,7 @@ async def update_courses(ctx):
         ]
     )
     body = f"""
-    klikk på de korresponderende emojiene under meldingen for å få tilgang til emnets kanaler. Du kan fjerne medlemskap fra et emne ved å klikke på den samme emojien om igjen.
+    klikk på de korresponderende emojiene under meldingen for å få tilgang til emnets kanaler. Du kan fjerne medlemskap fra et emne ved å klikke på samme emoji igjen.
     ```{body}```
     """
     footer = ""
@@ -200,27 +197,90 @@ async def update_courses(ctx):
 @commands.has_role("Admin")
 async def update_course_roles(ctx):
     guild = bot.get_guild(DATABASE.GUILD_ID)
-    guild_roles = [role.name for role in guild.roles]
 
-    for course in DATABASE.get_all_courses():
-        if course["role"] in ["Student", "Admin"]:
-            continue
+    for member in guild.members:
+        for role in member.roles:
+            if not len(role.name) == 6:
+                continue
 
-        if not course["active"] and course["role"] in guild_roles:
-            role = get(guild.roles, name=course["role"])
-            await role.delete()
+            course = DATABASE.get_one_course("role", role.name)
 
-        elif course["active"] and not course["role"] in guild_roles:
-            await guild.create_role(
-                name=course["role"], permissions=discord.Permissions(67175424)
-            )
+            if not course["active"]:
+                try:
+                    await discord.Member.remove_roles(member, role)
+                except:
+                    pass
 
-    course_roles = DATABASE.get_all_courses(key="role")
 
-    for guild_role in guild_roles:
-        if len(guild_role) == 6 and guild_role not in course_roles:
-            role = get(guild.roles, name=guild_role)
-            await role.delete()
+@bot.command(
+    name="togglecourse", help="Toggles the courses state on/off.",
+)
+@commands.has_role("Admin")
+async def toggle_course_activity(ctx, role: str):
+    return DATABASE.toggle_course_activity(role)
+
+
+@bot.command(
+    name="setattr", help="Find database entry and update attribute.",
+)
+@commands.has_role("Admin")
+async def toggle_course_activity(ctx, filter: str, identifier: str, key: str, value):
+    return DATABASE.set_attr(filter, identifier, key, value)
+
+
+@bot.command(
+    name="createcourse", help="Creates channels for a new subject.",
+)
+@commands.has_role("Admin")
+async def create_course(ctx, canvas_id: int, name: str, icon: str, role: str, token=""):
+
+    if canvas_id in DATABASE.get_all_courses("canvas_id"):
+        await ctx.author.send("Course already exists.")
+        return
+
+    if role in ["Student", "Admin"]:
+        await ctx.author.send("Student/Admin not valid course.")
+        return
+
+    # fmt: off
+    guild = bot.get_guild(DATABASE.GUILD_ID)
+
+    role_student = get(guild.roles, name="Student")
+    role_moderator = get(guild.roles, name="Moderator")
+    role_TA = get(guild.roles, name="Hjelpelærer")
+    role_new = await guild.create_role(name=role, permissions=discord.Permissions(67175424))
+
+    category = await guild.create_category(f"{role} {name}".upper())
+    news_channel = await guild.create_text_channel(f"{role}-nyheter", category=category)
+    task_channel = await guild.create_text_channel(f"{role}-oppgaver", category=category)
+    main_channel = await guild.create_text_channel(f"{role}-{name}", category=category)
+
+    await category.set_permissions(role_moderator, read_messages=True, send_messages=True, connect=True, speak=True)
+    await category.set_permissions(role_student, read_messages=True, send_messages=True, connect=True, speak=True)
+    await category.set_permissions(role_TA, read_messages=True, send_messages=True, connect=True, speak=True)
+    await category.set_permissions(ctx.guild.default_role, read_messages=False, connect=False)
+    
+    await news_channel.set_permissions(role_new, view_channel=True, send_messages=False)
+    await news_channel.set_permissions(role_moderator, view_channel=True, send_messages=True)
+    await news_channel.set_permissions(role_TA, view_channel=False, send_messages=False)
+    await news_channel.set_permissions(role_student, view_channel=False, send_messages=False)
+    await news_channel.set_permissions(ctx.guild.default_role, view_channel=False, send_messages=False)
+    
+    await task_channel.set_permissions(role_new, view_channel=True, send_messages=False)
+    await task_channel.set_permissions(role_moderator, view_channel=True, send_messages=True)
+    await task_channel.set_permissions(role_TA, view_channel=False, send_messages=True)
+    await task_channel.set_permissions(role_student, view_channel=False, send_messages=True)
+    await task_channel.set_permissions(ctx.guild.default_role, view_channel=False, send_messages=False)
+    
+    await main_channel.set_permissions(role_new, view_channel=True, send_messages=False)
+    await main_channel.set_permissions(role_moderator, view_channel=True, send_messages=True)
+    await main_channel.set_permissions(role_TA, view_channel=False, send_messages=True)
+    await main_channel.set_permissions(role_student, view_channel=False, send_messages=True)
+    await main_channel.set_permissions(ctx.guild.default_role, view_channel=False, send_messages=False)
+
+    _id = len(DATABASE.get_all_courses("_id")) + 1
+    DATABASE.add_course(_id, name, canvas_id, icon, role, token, main_channel.id, task_channel.id, news_channel.id)
+    # fmt: on
 
 
 @loop(seconds=60)
@@ -240,7 +300,9 @@ async def check_for_announcements():
                         bot, DATABASE.GUILD_ID, course, announcement
                     )
                     print(f"[{TIME()}]\t{course['role']} announcement fetched!")
-                    DATABASE.add_course_announcement(course["_id"], announcement["id"])
+                    DATABASE.add_course_announcement(
+                        course["canvas_id"], announcement["id"]
+                    )
 
 
 @check_for_announcements.before_loop
