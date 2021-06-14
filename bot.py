@@ -224,7 +224,7 @@ async def toggle_course_activity(ctx, role: str):
     name="setattr", help="Find database entry and update attribute.",
 )
 @commands.has_role("Admin")
-async def toggle_course_activity(ctx, filter: str, identifier: str, key: str, value):
+async def set_attr(ctx, filter: str, identifier: str, key: str, value):
     return DATABASE.set_attr(filter, identifier, key, value)
 
 
@@ -232,9 +232,9 @@ async def toggle_course_activity(ctx, filter: str, identifier: str, key: str, va
     name="createcourse", help="Creates channels for a new subject.",
 )
 @commands.has_role("Admin")
-async def create_course(ctx, canvas_id: int, name: str, icon: str, role: str, token=""):
+async def create_course(ctx, canvas: int, name: str, icon: str, role: str, token=""):
 
-    if canvas_id in DATABASE.get_all_courses("canvas_id"):
+    if canvas in DATABASE.get_all_courses("canvas"):
         await ctx.author.send("Course already exists.")
         return
 
@@ -279,7 +279,7 @@ async def create_course(ctx, canvas_id: int, name: str, icon: str, role: str, to
     await main_channel.set_permissions(ctx.guild.default_role, view_channel=False, send_messages=False)
 
     _id = len(DATABASE.get_all_courses("_id")) + 1
-    DATABASE.add_course(_id, name, canvas_id, icon, role, token, main_channel.id, task_channel.id, news_channel.id)
+    DATABASE.add_course(_id, name, canvas, icon, role, token, main_channel.id, task_channel.id, news_channel.id)
     # fmt: on
 
 
@@ -301,7 +301,7 @@ async def check_for_announcements():
                     )
                     print(f"[{TIME()}]\t{course['role']} announcement fetched!")
                     DATABASE.add_course_announcement(
-                        course["canvas_id"], announcement["id"]
+                        course["canvas"], announcement["id"]
                     )
 
 

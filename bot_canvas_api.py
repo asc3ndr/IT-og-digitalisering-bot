@@ -11,9 +11,11 @@ class CanvasAPI:
     @staticmethod
     async def fetch_announcements(course: dict, access_token: str):
         response = requests.get(
-            f"https://himolde.instructure.com/api/v1/announcements?context_codes[]=course_{course['canvas_id']}",
+            f"https://himolde.instructure.com/api/v1/announcements?context_codes[]=course_{course['canvas']}",
             headers={"Authorization": f"Bearer {access_token}"},
         )
+        # start_date=YYYY-MM-DD default: 14 days ago
+        # end_date=YYYY-MM-DD default 28 days from start_date
 
         if response.status_code == 200:
             return response.json()

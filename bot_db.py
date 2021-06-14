@@ -23,7 +23,7 @@ class DigitDB:
     def add_course(
         self,
         _id: int,
-        canvas_id: int,
+        canvas: str,
         name: str,
         icon: str,
         role: str,
@@ -36,7 +36,7 @@ class DigitDB:
     ):
         schema = {
             "_id": _id,
-            "canvas_id": canvas_id,
+            "canvas": canvas,
             "name": name,
             "icon": icon,
             "role": role,
@@ -47,7 +47,7 @@ class DigitDB:
             "announcements": announcements,
             "active": active,
         }
-        if not self.courses.find_one({"canvas_id": canvas_id}):
+        if not self.courses.find_one({"_id": _id}):
             return self.courses.insert_one(schema)
         return None
 
@@ -61,9 +61,9 @@ class DigitDB:
     def get_one_course(self, key: str, identifier: str) -> dict:
         return self.courses.find_one({key: identifier})
 
-    def add_course_announcement(self, canvas_id: str, announcement_id: int) -> dict:
+    def add_course_announcement(self, canvas: str, announcement_id: int) -> dict:
         return self.courses.update_one(
-            {"canvas_id": canvas_id}, {"$push": {"announcements": announcement_id}}
+            {"canvas": canvas}, {"$push": {"announcements": announcement_id}}
         )
 
     def toggle_course_activity(self, role: str):
@@ -83,17 +83,16 @@ class DigitDB:
 
 if __name__ == "__main__":
 
-    drop = False
+    drop = True
     if drop:
 
         MongoClient("mongodb://localhost:27017/").drop_database("digit")
 
-        # Initialize
         x = DigitDB()
 
         x.add_course(
             1,
-            1141,
+            "1141",
             "Bachelor i IT og digitalisering",
             "🐋",
             "Student",
@@ -127,7 +126,7 @@ if __name__ == "__main__":
 
         x.add_course(
             2,
-            1140,
+            "1140",
             "Bachelor i IT og digitalisering - 2019/22",
             "🐋",
             "Student",
@@ -141,7 +140,7 @@ if __name__ == "__main__":
 
         x.add_course(
             3,
-            69,
+            "69",
             "Avdelingene for logistikk, \u00f8konomi og samfunnsfag",
             "🐋",
             "Student",
@@ -155,7 +154,7 @@ if __name__ == "__main__":
 
         x.add_course(
             4,
-            65,
+            "65",
             "HiMolde Student Info",
             "🐋",
             "Student",
@@ -242,7 +241,7 @@ if __name__ == "__main__":
 
         x.add_course(
             5,
-            0,
+            "",
             "Practical Programming",
             "💻",
             "IBE151",
@@ -256,7 +255,7 @@ if __name__ == "__main__":
 
         x.add_course(
             6,
-            0,
+            "",
             "Information Technology",
             "🤖",
             "IBE110",
@@ -270,7 +269,7 @@ if __name__ == "__main__":
 
         x.add_course(
             7,
-            0,
+            "",
             "Forretningsprosesser",
             "📚",
             "IBE430",
@@ -284,7 +283,7 @@ if __name__ == "__main__":
 
         x.add_course(
             8,
-            0,
+            "",
             "Extended Reality",
             "🥽",
             "IBE320",
@@ -298,7 +297,7 @@ if __name__ == "__main__":
 
         x.add_course(
             9,
-            0,
+            "",
             "Matematikk",
             "🧮",
             "MAT100",
@@ -312,7 +311,7 @@ if __name__ == "__main__":
 
         x.add_course(
             10,
-            0,
+            "",
             "Agile Methods",
             "🎪",
             "IBE205",
@@ -326,7 +325,7 @@ if __name__ == "__main__":
 
         x.add_course(
             11,
-            0,
+            "",
             "Webutvikling",
             "🐵",
             "IBE102",
@@ -366,7 +365,7 @@ if __name__ == "__main__":
 
         x.add_course(
             12,
-            0,
+            "",
             "Virksomhetsdata",
             "📱",
             "IBE120",
@@ -408,7 +407,7 @@ if __name__ == "__main__":
 
         x.add_course(
             13,
-            0,
+            "",
             "Database",
             "🐧",
             "IBE211",
@@ -436,7 +435,7 @@ if __name__ == "__main__":
 
         x.add_course(
             14,
-            0,
+            "",
             "e-Business",
             "🌎",
             "LOG206",
@@ -472,7 +471,7 @@ if __name__ == "__main__":
 
         x.add_course(
             15,
-            0,
+            "",
             "Statistikk II",
             "💢",
             "MAT210",
@@ -486,7 +485,7 @@ if __name__ == "__main__":
 
         x.add_course(
             16,
-            0,
+            "",
             "Statistikk I",
             "💀",
             "MAT110",
@@ -565,7 +564,7 @@ if __name__ == "__main__":
 
         x.add_course(
             17,
-            0,
+            "",
             "Mikro\u00f8konomi",
             "📈",
             "S\u00D8K200",
@@ -621,7 +620,7 @@ if __name__ == "__main__":
 
         x.add_course(
             18,
-            0,
+            "",
             "Innkj\u00f8psledelse",
             "💵",
             "LOG505",
@@ -665,7 +664,7 @@ if __name__ == "__main__":
 
         x.add_course(
             19,
-            0,
+            "",
             "Lager og Produksjon",
             "🚚",
             "SCM200",
